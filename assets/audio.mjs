@@ -1,74 +1,68 @@
-const CHORDS = [[130.81,196,261.63,329.63],[146.83,220,293.66,349.23],[164.81,246.94,329.63,440],[110,164.81,220,277.18]];
-const NOTES = [261.63,329.63,392,523.25];
-
-// All audio starts in the user's click handler. UI follows AudioContext.state.
+// Original eight-bar compositions. No autoplay, sample downloads or noise loops.
+export const HARMONY=[
+ {name:'Dmaj9',bass:38,notes:[54,61,64,69]}, {name:'Bm9',bass:35,notes:[54,57,61,66]},
+ {name:'Em9',bass:40,notes:[55,59,62,66]}, {name:'A13',bass:33,notes:[55,61,66,71]},
+ {name:'F#m9',bass:42,notes:[57,61,64,68]}, {name:'Bm9',bass:35,notes:[54,57,61,66]},
+ {name:'Em9',bass:40,notes:[55,59,62,66]}, {name:'A13',bass:33,notes:[55,61,66,71]}
+];
+const MELODIES=[[73,69,66],[69,66,61],[71,69,66],[71,73,76],[73,68,64],[66,69,73],[71,74,78],[76,73,69]];
+export function scoreBar(mode,bar){
+ const chord=HARMONY[bar%8],melody=MELODIES[bar%8],jazz=mode==='jazz',events=[];
+ const add=(beat,midi,length,velocity,instrument='keys',pan=0)=>events.push({beat,midi,length,velocity,instrument,pan});
+ chord.notes.forEach((n,i)=>add(i*.045,n,jazz?2.7:5.8,jazz?.061:.057,'keys',(i-1.5)*.15));
+ add(0,chord.bass,jazz?1.8:5,.14,'bass',-.08);
+ if(jazz){
+  chord.notes.slice(1).forEach((n,i)=>add(2.66+i*.025,n,1.8,.032,'keys',(i-1)*.2));
+  add(2,chord.bass+7,1.25,.075,'bass',-.08);
+  if(bar%4!==3){add(1.66,melody[0],.85,.048,'keys',.2);add(3,melody[1],.65,.04,'keys',-.1);if(bar%2===0)add(3.66,melody[2],.6,.03,'keys',.15);}
+ }else{
+  [chord.notes[1],chord.notes[3]].forEach((n,i)=>add(0,n,7.8,.018,'pad',i?-.5:.5));
+  add(3.5,melody[0],3,.038,'keys',.25);if(bar%3!==2)add(6,melody[1],2.8,.029,'keys',-.2);
+ }
+ return events.sort((a,b)=>a.beat-b.beat);
+}
+const midi=n=>440*2**((n-69)/12);
 export class AmbientAudio extends EventTarget {
-  constructor(){super();this.ctx=null;this.enabled=false;this.volume=.42;this.hidden=false;this.scene=0;this.voices=[];this.step=0;this.timer=null;}
-  get playing(){return this.enabled&&!this.hidden&&this.ctx?.state==='running';}
-  init(){
-    const Context=globalThis.AudioContext||globalThis.webkitAudioContext;
-    if(!Context)throw new Error('このブラウザでは音声を開始できません。');
-    this.ctx=new Context();const c=this.ctx;
-    this.master=c.createGain();this.master.gain.value=0;
-    const limiter=c.createDynamicsCompressor();limiter.threshold.value=-12;limiter.knee.value=12;limiter.ratio.value=5;
-    this.master.connect(limiter);limiter.connect(c.destination);
-    this.bus=c.createGain();this.bus.connect(this.master);
-    this.delay=c.createDelay(1);this.delay.delayTime.value=.38;
-    const wet=c.createGain();wet.gain.value=.24;this.bus.connect(this.delay);this.delay.connect(wet);wet.connect(this.master);
-    const feedback=c.createGain();feedback.gain.value=.30;this.delay.connect(feedback);feedback.connect(this.delay);
-    this.analyser=c.createAnalyser();this.analyser.fftSize=128;this.master.connect(this.analyser);this.samples=new Uint8Array(128);
-    for(let i=0;i<4;i++){
-      const oscillator=c.createOscillator(),gain=c.createGain(),filter=c.createBiquadFilter();
-      oscillator.type=i%2?'sine':'triangle';oscillator.frequency.value=CHORDS[0][i];oscillator.detune.value=(i-1.5)*3;
-      filter.type='lowpass';filter.frequency.value=1200;gain.gain.value=.105-i*.013;
-      oscillator.connect(filter);filter.connect(gain);
-      if(c.createStereoPanner){const pan=c.createStereoPanner();pan.pan.value=(i-1.5)*.42;gain.connect(pan);pan.connect(this.bus);}else gain.connect(this.bus);
-      const lfo=c.createOscillator(),depth=c.createGain();lfo.frequency.value=.07+i*.023;depth.gain.value=.018;lfo.connect(depth);depth.connect(gain.gain);lfo.start();oscillator.start();
-      this.voices.push({oscillator,filter,gain});
-    }
-    const buffer=c.createBuffer(1,c.sampleRate*3,c.sampleRate),data=buffer.getChannelData(0);let brown=0;
-    for(let i=0;i<data.length;i++){brown=(brown+(Math.random()*2-1)*.035)/1.015;data[i]=brown*4;}
-    this.wind=c.createBufferSource();this.wind.buffer=buffer;this.wind.loop=true;
-    this.windFilter=c.createBiquadFilter();this.windFilter.type='bandpass';this.windFilter.frequency.value=640;this.windFilter.Q.value=.5;
-    this.windGain=c.createGain();this.windGain.gain.value=.10;this.wind.connect(this.windFilter);this.windFilter.connect(this.windGain);this.windGain.connect(this.bus);this.wind.start();
-    c.onstatechange=()=>this.dispatchEvent(new Event('statechange'));
-    this.setScene(this.scene);this.setGame(this.game);
-    this.timer=setInterval(()=>{if(!this.playing||this.game==='echo')return;const scale=CHORDS[this.scene];this.tone(scale[(this.step++)%4]*2,.045,1.8,(this.step%3-1)*.6);},1800);
-  }
-  async start(){
-    if(!this.ctx||this.ctx.state==='closed')this.init();
-    this.enabled=true;
-    let timeout;
-    try{
-      const resumed=this.ctx.resume();
-      await Promise.race([resumed,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('音声を開始できませんでした。もう一度「音を開始」を押してください。')),4000);})]);
-      if(this.ctx.state!=='running')throw new Error('音声が休止中です。「音を開始」をもう一度押してください。');
-      this.apply();this.effect('start');this.dispatchEvent(new Event('statechange'));return true;
-    }catch(error){this.enabled=false;this.apply();this.dispatchEvent(new Event('statechange'));throw error;}finally{clearTimeout(timeout);}
-  }
-  stop(){this.enabled=false;this.apply();this.dispatchEvent(new Event('statechange'));return false;}
-  toggle(){return this.playing?Promise.resolve(this.stop()):this.start();}
-  apply(){if(this.ctx&&this.ctx.state!=='closed')this.master.gain.setTargetAtTime(this.enabled&&!this.hidden?this.volume:0,this.ctx.currentTime,.15);}
-  setVolume(value){this.volume=Math.max(0,Math.min(.7,Number(value)||0));this.apply();this.dispatchEvent(new Event('statechange'));}
-  setScene(scene){this.scene=Math.max(0,Math.min(3,scene));if(!this.ctx)return;const now=this.ctx.currentTime;this.voices.forEach((voice,i)=>{voice.oscillator.frequency.setTargetAtTime(CHORDS[this.scene][i],now,1.4);voice.filter.frequency.setTargetAtTime([1100,1600,1900,2400][this.scene],now,1.2);});}
-  setGame(kind){this.game=kind;if(!this.ctx)return;this.voices.forEach((voice,i)=>voice.gain.gain.setTargetAtTime((.105-i*.013)*(kind==='echo'?.24:kind==='flight'?.7:1),this.ctx.currentTime,.3));this.setMotion(0);}
-  setMotion(amount){if(!this.ctx)return;this.windGain.gain.setTargetAtTime((.08+Math.min(1,Math.max(0,amount))*.13)*(this.game==='echo'?.12:1),this.ctx.currentTime,.3);}
-  async visibility(hidden){this.hidden=hidden;if(!this.ctx)return;this.apply();if(hidden)await this.ctx.suspend();else if(this.enabled){try{await this.ctx.resume();}finally{this.dispatchEvent(new Event('statechange'));}}}
-  level(){if(!this.playing||!this.analyser)return 0;this.analyser.getByteTimeDomainData(this.samples);return Math.sqrt(this.samples.reduce((sum,v)=>sum+((v-128)/128)**2,0)/this.samples.length);}
-  tone(frequency,gain=.12,duration=.5,pan=0,type='sine',delay=0){
-    if(!this.playing||!this.volume)return;const c=this.ctx,now=c.currentTime+delay,osc=c.createOscillator(),amp=c.createGain();
-    osc.type=type;osc.frequency.value=frequency;amp.gain.setValueAtTime(0,now);amp.gain.linearRampToValueAtTime(gain,now+.025);amp.gain.exponentialRampToValueAtTime(.0001,now+duration);
-    osc.connect(amp);let panner;if(c.createStereoPanner){panner=c.createStereoPanner();panner.pan.value=pan;amp.connect(panner);panner.connect(this.bus);}else amp.connect(this.bus);
-    osc.start(now);osc.stop(now+duration+.05);osc.onended=()=>{osc.disconnect();amp.disconnect();panner?.disconnect();};
-  }
-  effect(kind,index=0){
-    if(kind==='pad'){this.tone(NOTES[index%4],.20,.45,(index-1.5)*.35,'triangle');return;}
-    if(kind==='hit'){this.tone(82.41,.16,.28,0,'sawtooth');return;}
-    if(kind==='collect'){this.tone(783.99,.14,.28,-.2);this.tone(1046.5,.10,.35,.2,'sine',.07);return;}
-    if(kind==='warp'){[130.81,261.63,523.25,1046.5].forEach((f,i)=>this.tone(f,.10,.7,0,'triangle',i*.08));return;}
-    const frequencies=kind==='start'?[392,523.25]:kind==='fail'?[220,164.81]:[261.63,329.63,392,523.25];
-    frequencies.forEach((f,i)=>this.tone(f,.13,.85,(i-1.5)*.2,'sine',i*.12));
-  }
-  chime(){this.effect('success');}
-  destroy(){clearInterval(this.timer);this.enabled=false;this.ctx?.close();}
+ constructor(){super();this.ctx=null;this.enabled=false;this.hidden=false;this.volume=.48;this.mode='ambient';this.game=null;this.effects=true;this.bar=0;this.queue=[];this.nodes=new Set();}
+ get playing(){return this.enabled&&!this.hidden&&this.ctx?.state==='running';}
+ emit(){this.dispatchEvent(new Event('statechange'));}
+ init(){
+  const Context=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Context)throw Error('このブラウザでは音声を開始できません。');const c=this.ctx=new Context();
+  this.master=c.createGain();this.master.gain.value=0;const limiter=c.createDynamicsCompressor();limiter.threshold.value=-14;limiter.knee.value=16;limiter.ratio.value=3;limiter.attack.value=.02;limiter.release.value=.5;this.master.connect(limiter);limiter.connect(c.destination);
+  this.music=c.createGain();this.music.gain.value=1;this.music.connect(this.master);this.effectsBus=c.createGain();this.effectsBus.gain.value=.7;this.effectsBus.connect(this.master);
+  // A dark, stereo room tail; the impulse is not played as a sound source.
+  this.reverb=c.createConvolver();const seconds=4.5,buffer=c.createBuffer(2,Math.floor(c.sampleRate*seconds),c.sampleRate);
+  let seed=731;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  for(let ch=0;ch<2;ch++){const data=buffer.getChannelData(ch);let smooth=0;for(let i=0;i<data.length;i++){smooth=smooth*.7+(random()*2-1)*.3;data[i]=smooth*Math.exp(-i/c.sampleRate*1.65)*(1-Math.exp(-i/c.sampleRate*35));}}
+  this.reverb.buffer=buffer;const wet=c.createGain(),filter=c.createBiquadFilter();filter.type='lowpass';filter.frequency.value=2700;wet.gain.value=.32;this.music.connect(this.reverb);this.reverb.connect(filter);filter.connect(wet);wet.connect(this.master);
+  c.onstatechange=()=>this.emit();this.nextBar=c.currentTime+.08;
+ }
+ async start(){
+  if(!this.ctx||this.ctx.state==='closed')this.init();this.enabled=true;let timeout;
+  try{await Promise.race([this.ctx.resume(),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('音声を開始できませんでした。再生をもう一度押してください。')),4000);})]);if(this.ctx.state!=='running')throw Error('音声が休止中です。再生をもう一度押してください。');this.nextBar=this.ctx.currentTime+.08;this.queue=[];this.apply();this.schedule();clearInterval(this.timer);this.timer=setInterval(()=>this.schedule(),100);this.emit();return true;}
+  catch(error){this.enabled=false;this.apply();this.emit();throw error;}finally{clearTimeout(timeout);}
+ }
+ stop(){this.enabled=false;clearInterval(this.timer);this.queue=[];this.apply();this.emit();return false;}
+ toggle(){return this.playing?Promise.resolve(this.stop()):this.start();}
+ apply(){if(this.ctx&&this.ctx.state!=='closed')this.master.gain.setTargetAtTime(this.enabled&&!this.hidden?this.volume:0,this.ctx.currentTime,.22);}
+ setVolume(value){this.volume=Math.max(0,Math.min(.8,Number(value)||0));this.apply();this.emit();}
+ setMode(mode){if(!['ambient','jazz'].includes(mode))return;this.mode=mode;if(this.ctx){this.queue=[];this.nextBar=this.ctx.currentTime+1;this.bar=0;this.music.gain.setTargetAtTime(0,this.ctx.currentTime,.12);this.music.gain.setTargetAtTime(this.game==='echo'?.18:1,this.nextBar,.6);}this.emit();}
+ setGame(kind){this.game=kind;if(this.ctx)this.music.gain.setTargetAtTime(kind==='echo'?.18:1,this.ctx.currentTime,.4);}
+ async visibility(hidden){this.hidden=hidden;if(!this.ctx)return;this.apply();if(hidden){clearInterval(this.timer);await this.ctx.suspend();}else if(this.enabled){try{await this.ctx.resume();this.queue=[];this.nextBar=this.ctx.currentTime+.2;clearInterval(this.timer);this.timer=setInterval(()=>this.schedule(),100);this.schedule();}catch{}this.emit();}}
+ schedule(){
+  if(!this.playing)return;const now=this.ctx.currentTime,beat=60/(this.mode==='jazz'?68:56),beats=this.mode==='jazz'?4:8;
+  if(this.nextBar<now-1){this.nextBar=now+.05;this.queue=[];}
+  if(this.nextBar<now+.45){const events=scoreBar(this.mode,this.bar++);this.queue.push(...events.map(e=>({...e,time:this.nextBar+e.beat*beat,duration:e.length*beat})));this.nextBar+=beats*beat;}
+  while(this.queue.length&&this.queue[0].time<now+.4){const e=this.queue.shift();if(e.time>=now-.1)this.note(e.midi,e.velocity,e.duration,e.pan,e.instrument,Math.max(now,e.time));}
+ }
+ note(pitch,velocity,duration,pan=0,instrument='keys',when=this.ctx?.currentTime,bus=this.music){
+  if(!this.playing||!this.volume)return;const c=this.ctx,amp=c.createGain(),panner=c.createStereoPanner();panner.pan.value=pan;amp.connect(panner);panner.connect(bus);
+  velocity*=1.8;const t=when,attack=instrument==='pad'?.9:instrument==='bass'?.04:.028;
+  amp.gain.setValueAtTime(0,t);amp.gain.linearRampToValueAtTime(velocity,t+attack);if(duration>attack*2)amp.gain.exponentialRampToValueAtTime(velocity*(instrument==='pad'?.65:.08),t+Math.max(attack+.01,duration*.65));amp.gain.exponentialRampToValueAtTime(.0001,t+Math.max(duration,attack+.2));
+  const partials=instrument==='bass'?[[1,1],[2,.15]]:instrument==='pad'?[[1,1],[2,.07]]:[[1,1],[2,.27],[3,.075],[4,.025]];
+  let remaining=partials.length;
+  for(const[ratio,weight]of partials){const osc=c.createOscillator(),gain=c.createGain();osc.type='sine';osc.frequency.value=midi(pitch)*ratio;gain.gain.setValueAtTime(weight,t);if(instrument==='keys'&&ratio>1)gain.gain.exponentialRampToValueAtTime(.001,t+duration*.55);osc.connect(gain);gain.connect(amp);osc.start(t);osc.stop(t+duration+.1);this.nodes.add(osc);osc.onended=()=>{osc.disconnect();gain.disconnect();this.nodes.delete(osc);if(--remaining===0){amp.disconnect();panner.disconnect();}};}
+ }
+ effect(kind,index=0){if(!this.effects||!this.playing)return;if(kind==='pad')this.note([60,64,67,72][index%4],.2,.65,(index-1.5)*.2,'keys',this.ctx.currentTime,this.effectsBus);}
+ destroy(){clearInterval(this.timer);this.enabled=false;this.ctx?.close();this.nodes.clear();}
 }

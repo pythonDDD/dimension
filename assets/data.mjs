@@ -1,4 +1,4 @@
-import { finite, mergeBlocks, normalizeCandles, isHex64 } from './bitcoin.mjs?v=3.0.0';
+import { finite, mergeBlocks, normalizeCandles, isHex64 } from './bitcoin.mjs?v=4.0.0';
 const MEMPOOL='https://mempool.space/api';
 const EXCHANGE='https://api.exchange.coinbase.com/products';
 export const STALE_AFTER=150_000;
@@ -40,9 +40,7 @@ export class DataFeed extends EventTarget {
       ['blocks',`${MEMPOOL}/v1/blocks`,d=>{if(!Array.isArray(d))throw Error('Invalid blocks');this.ingestBlocks(d);return null;}],
       ['mempool',`${MEMPOOL}/mempool`,d=>{if(!finite(d.count)||d.count<0||!finite(d.vsize))throw Error('Invalid mempool');return d;}],
       ['fees',`${MEMPOOL}/v1/fees/recommended`,d=>{if(!['fastestFee','halfHourFee','hourFee','economyFee'].every(k=>finite(d[k])&&d[k]>=0))throw Error('Invalid fees');return d;}],
-      ['prices',`${MEMPOOL}/v1/prices`,d=>{if(!finite(d.JPY)||d.JPY<=0)throw Error('Invalid price');return d;}],
       ['market',`${EXCHANGE}/BTC-USD/stats`,d=>{const result=Object.fromEntries(['open','high','low','last','volume'].map(k=>[k,Number(d[k])]));if(!Object.values(result).every(finite)||result.last<=0||result.open<=0)throw Error('Invalid market');return result;}],
-      ['difficulty',`${MEMPOOL}/v1/difficulty-adjustment`,d=>{if(!finite(d.difficultyChange))throw Error('Invalid difficulty');return d;}],
       ['transactions',`${MEMPOOL}/mempool/recent`,d=>{if(!Array.isArray(d))throw Error('Invalid transactions');return d.filter(t=>isHex64(t.txid)&&finite(t.fee)&&finite(t.vsize)).slice(0,10);}]
     ];
     await Promise.allSettled(jobs.map(async([key,url,parse])=>{try{const raw=await requestJSON(url,{signal:controller.signal});if(!this.active||this.controller!==controller||controller.signal.aborted)return;const data=parse(raw);if(data!==null){const at=key==='prices'&&finite(data.time)?Math.min(Date.now(),data.time*1000):Date.now();this.accept(key,data,at);}}catch(error){if(this.active&&this.controller===controller&&!controller.signal.aborted)this.fail(key,error);}}));

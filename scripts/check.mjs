@@ -1,19 +1,6 @@
-import { readFile, access } from 'node:fs/promises';
+import {readFile,access,readdir} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
-const html=await readFile('index.html','utf8');
-const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
-assert.equal(ids.length,new Set(ids).size,'HTML contains duplicate IDs');
-const js=(await Promise.all(['app','experience','arcade'].map(name=>readFile(`assets/${name}.mjs`,'utf8')))).join('\n');
-for(const match of js.matchAll(/(?<![\w])(?:\$|text)\('([^']+)'(?=[,)])/g))assert(ids.includes(match[1]),`Missing element #${match[1]}`);
-for(const match of html.matchAll(/(?:src|href)="(assets\/[^"?#]+)(?:[?#][^"]*)?"/g))await access(match[1]);
-for(const source of ['assets/app.mjs','assets/cosmos.mjs','assets/data.mjs','assets/experience.mjs','assets/arcade.mjs']){
- const code=await readFile(source,'utf8');
- for(const match of code.matchAll(/from ['"]\.\/([^'"]+)['"]/g))await access(`assets/${match[1].split(/[?#]/)[0]}`);
-}
-assert(!/\bon(?:click|load|error|input)=/i.test(html),'CSP-incompatible inline handler');
-assert(!/<script(?![^>]*src=)[^>]*>/i.test(html),'Unexpected inline script');
-const archive=JSON.parse(await readFile('data/history-2017.json','utf8'));
-assert.equal(archive.candles.length,365,'2017 history must contain all 365 UTC days');
-assert.equal(archive.candles[0][0],1483228800);assert.equal(archive.candles.at(-1)[0],1514678400);
-for(let i=1;i<365;i++)assert.equal(archive.candles[i][0]-archive.candles[i-1][0],86400);
-console.log(`Static integrity: ${ids.length} unique elements, assets and imports resolved, 365 historical days verified.`);
+const html=await readFile('index.html','utf8');const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,'Duplicate HTML IDs');
+for(const file of (await readdir('assets')).filter(f=>f.endsWith('.mjs'))){execFileSync(process.execPath,['--check',`assets/${file}`]);const code=await readFile(`assets/${file}`,'utf8');for(const match of code.matchAll(/from ['"]\.\/([^'"]+)['"]/g))await access(`assets/${match[1].split(/[?#]/)[0]}`);if(['app.mjs','arcade.mjs'].includes(file))for(const match of code.matchAll(/(?<![\w])(?:\$|text)\('([^']+)'(?=[,)])/g))assert(ids.includes(match[1]),`Missing element #${match[1]}`);}
+for(const match of html.matchAll(/(?:src|href)="(assets\/[^"?#]+)(?:[?#][^"]*)?"/g))await access(match[1]);assert(!/\bon(?:click|load|error|input)=/i.test(html),'Inline handler');assert(!/<script(?![^>]*src=)[^>]*>/i.test(html),'Inline script');assert(!/<dialog|role="tab"|data-panel=|タイムマシン|クリプト.?ラボ/.test(html),'Removed navigation returned');console.log(`Static integrity: ${ids.length} unique elements, all modules and assets resolve, no tabs or dialogs.`);

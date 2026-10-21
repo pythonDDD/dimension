@@ -1,48 +1,10 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import {random,newFlight,stepFlight,routePuzzle,routeCost,bestRoute,blockPuzzle,blockTotals,bestBlock,newEcho,nextEcho,echoInput} from '../assets/games.mjs';
-import {tesseract} from '../assets/bitcoin.mjs';
-
-test('Flight collects a crossed ring only once and preserves combo scoring',()=>{
-  const s=newFlight(1);s.spawn=100;s.objects=[{x:0,y:0,z:.001,kind:'sat'}];stepFlight(s,.02,{x:0,y:0});assert.equal(s.score,120);assert.equal(s.combo,1);assert.deepEqual(s.events,['collect']);stepFlight(s,.02,{x:0,y:0});assert.equal(s.score,120);assert.deepEqual(s.events,[]);
-});
-test('Flight collisions consume shields, respect invulnerability and end at 60 seconds',()=>{
-  const s=newFlight(2);s.spawn=100;s.objects=[{x:0,y:0,z:.001,kind:'rock'},{x:0,y:0,z:.002,kind:'rock'}];stepFlight(s,.02,{x:0,y:0});assert.equal(s.hearts,2);assert.equal(s.invulnerable,1.2);
-  s.time=59.99;stepFlight(s,.02,{x:0,y:0});assert.equal(s.ended,true);const before=structuredClone({...s,rng:null});stepFlight(s,1,{x:1,y:1});assert.deepEqual({...s,rng:null},before);
-});
-test('Flight steering stays bounded and zero or negative elapsed time cannot advance it',()=>{
-  const s=newFlight(3);s.spawn=100;stepFlight(s,-1,{x:3,y:-3});assert.equal(s.time,0);for(let i=0;i<500;i++)stepFlight(s,.02,{x:4,y:-4});assert(s.x<=1&&s.x>=-1&&s.y<=1&&s.y>=-1);assert(Number.isFinite(s.vx)&&Number.isFinite(s.vy));
-});
-test('Lightning paths reject repeats, disconnected hops and insufficient capacities',()=>{
-  const p={start:0,end:3,amount:50,nodes:[0,1,2,3].map(id=>({id})),edges:[{a:0,b:1,fee:5,capacity:80},{a:1,b:3,fee:2,capacity:80},{a:0,b:2,fee:1,capacity:40},{a:2,b:3,fee:1,capacity:80}]};
-  assert.equal(routeCost(p,[0,1,3]),7);assert.equal(routeCost(p,[0,2,3]),Infinity);assert.equal(routeCost(p,[0,1,0]),Infinity);assert.equal(routeCost(p,[0,3]),Infinity);assert.deepEqual(bestRoute(p),{cost:7,path:[0,1,3]});
-});
-test('Every generated route is solvable and matches independent shortest-distance relaxation',()=>{
-  for(let seed=0;seed<40;seed++){
-    const p=routePuzzle(seed),result=bestRoute(p);assert.equal(result.path[0],0);assert.equal(result.path.at(-1),8);assert.equal(routeCost(p,result.path),result.cost);
-    const dist=Array(9).fill(Infinity);dist[0]=0;
-    for(let round=0;round<8;round++)for(const e of p.edges)if(e.capacity>=p.amount){dist[e.b]=Math.min(dist[e.b],dist[e.a]+e.fee);dist[e.a]=Math.min(dist[e.a],dist[e.b]+e.fee);}
-    assert.equal(result.cost,dist[8]);assert(Number.isFinite(result.cost));
-  }
-});
-test('Block solver matches exhaustive 4096-subset search and never reuses a transaction',()=>{
-  for(let seed=0;seed<12;seed++){
-    const p=blockPuzzle(seed),result=bestBlock(p);let maximum=0;
-    for(let bits=0;bits<4096;bits++){let size=0,fee=0;for(let i=0;i<12;i++)if(bits>>i&1){size+=p.transactions[i].size;fee+=p.transactions[i].fee;}if(size<=p.capacity)maximum=Math.max(maximum,fee);}
-    assert.equal(result.fee,maximum);assert.equal(new Set(result.ids).size,result.ids.length);const total=blockTotals(p,result.ids);assert.equal(total.fee,result.fee);assert(total.size<=100);
-    assert.deepEqual(blockTotals(p,[0,0]),blockTotals(p,[0]));
-  }
-});
-test('Hash Echo locks input during playback, scores complete rounds and stops on wrong input',()=>{
-  const s=newEcho(5),first=nextEcho(s);assert.equal(echoInput(s,first[0]),'ignored');s.phase='input';assert.equal(echoInput(s,first[0]),'complete');assert.equal(s.score,100);assert.equal(echoInput(s,first[0]),'ignored');
-  const second=nextEcho(s);assert.equal(second.length,2);assert.equal(second[0],first[0]);s.phase='input';assert.equal(echoInput(s,(second[0]+1)%4),'wrong');assert.equal(s.phase,'over');assert.equal(s.score,100);
-});
-test('Seeded puzzles are reproducible; manual 4D rotations and projection change geometry',()=>{
-  const a=random(24),b=random(24);for(let i=0;i<30;i++)assert.equal(a(),b());assert.deepEqual(routePuzzle(24),routePuzzle(24));
-  const base=tesseract(0,{distance:3.5}),rotated=tesseract(0,{xw:1,yw:.5,zw:.3,distance:2.5}),far=tesseract(0,{distance:5});assert.notDeepEqual(base.vertices,rotated.vertices);assert.notDeepEqual(base.vertices,far.vertices);assert.equal(rotated.edges.length,32);assert(rotated.vertices.flat().every(Number.isFinite));
-});
-
-test('Flight collision hitboxes compensate for a wide viewport instead of hitting distant objects',()=>{
-  const wide=newFlight(1);wide.spawn=100;wide.objects=[{x:.2,y:0,z:.001,kind:'rock'}];stepFlight(wide,.02,{x:0,y:0},2.5);assert.equal(wide.hearts,3);
-  const square=newFlight(1);square.spawn=100;square.objects=[{x:.2,y:0,z:.001,kind:'rock'}];stepFlight(square,.02,{x:0,y:0},1);assert.equal(square.hearts,2);
-});
+import test from 'node:test';import assert from 'node:assert/strict';
+import {newEcho,nextEcho,echoInput,mergeLine,moveTiles,newMerge,playMerge,canMerge,newMatch,findMatches,matchMoves,playMatch,adjacent,newBreaker,launchBreaker,stepBreaker} from '../assets/games.mjs';
+test('Hash Echo retains all 12 rounds, rejects double scoring and incorrect notes',()=>{const e=newEcho(12);for(let round=1;round<=12;round++){nextEcho(e);assert.equal(echoInput(e,0),'ignored');e.phase='input';e.sequence.forEach((pad,i)=>assert.equal(echoInput(e,pad),i===round-1?'complete':'correct'));assert.equal(echoInput(e,0),'ignored');}assert.equal(e.score,7800);const fail=newEcho(1);nextEcho(fail);fail.phase='input';assert.equal(echoInput(fail,(fail.sequence[0]+1)%4),'wrong');assert.equal(fail.score,0);});
+test('Merge combines once per move, preserves total, reverses directions correctly',()=>{assert.deepEqual(mergeLine([2,2,2,2]).line,[4,4,0,0]);assert.deepEqual(mergeLine([2,2,4,0]).line,[4,4,0,0]);const board=[2,2,4,0,...Array(12).fill(0)];assert.deepEqual(moveTiles(board,'right').board.slice(0,4),[0,0,4,4]);assert.equal(moveTiles(board,'left').score,4);for(const d of ['left','right','up','down'])assert.equal(moveTiles(board,d).board.reduce((a,b)=>a+b),8);});
+test('Merge adds only on legal moves and detects locked boards',()=>{const s=newMerge(1);s.board=[2,0,0,0,...Array(12).fill(0)];assert.equal(playMerge(s,'left'),null);assert.equal(s.undo,null);assert(playMerge(s,'down'));assert.equal(s.board.filter(Boolean).length,2);assert.deepEqual(s.undo.board.slice(0,4),[2,0,0,0]);assert.equal(canMerge([2,4,2,4,4,2,4,2,2,4,2,4,4,2,4,2]),false);});
+test('Match boards have no opening matches and always a valid move across 100 seeds',()=>{for(let n=0;n<100;n++){const s=newMatch(n);assert.equal(findMatches(s.board).length,0);assert(matchMoves(s.board).length>0);assert.equal(s.board.length,49);assert(s.board.every(n=>n>=0&&n<5));}});
+test('Match consumes exactly 20 successful turns, cascades score, no move cost on failure',()=>{const s=newMatch(73);assert.equal(adjacent(6,7),false);assert.equal(playMatch(s,6,7),null);assert.equal(s.moves,20);for(let i=0;i<20;i++){const pair=matchMoves(s.board)[0],before=s.score,result=playMatch(s,...pair);assert(result.frames.length>0);assert.equal(s.score-before,result.frames.reduce((sum,f)=>sum+f.points,0));assert.equal(findMatches(s.board).length,0);assert.equal(s.moves,19-i);}assert(s.over);assert.equal(playMatch(s,...matchMoves(s.board)[0]),null);});
+test('Breaker reflects off paddle and wall and loses one life per missed ball',()=>{const s=newBreaker();launchBreaker(s);s.ball={x:.5,y:.87,vx:0,vy:.6};stepBreaker(s,.05,.5);assert(s.ball.vy<0);s.ball={x:.99,y:.6,vx:.6,vy:0};stepBreaker(s,.05,.5);assert(s.ball.vx<0);s.ball={x:.05,y:1.03,vx:0,vy:.6};stepBreaker(s,.05,.5);assert.equal(s.lives,2);assert(s.ready);for(let i=0;i<100;i++)stepBreaker(s,.05,.5);assert.equal(s.lives,2);});
+test('Breaker clears a level once and scores collisions without tunneling',()=>{const s=newBreaker();s.bricks=[{x:.4,y:.2,w:.1,h:.058,hp:1,id:1}];s.ball={x:.45,y:.28,vx:0,vy:-.8};launchBreaker(s);stepBreaker(s,.05,.5);assert.equal(s.level,2);assert.equal(s.score,215);assert(s.ready);assert.equal(s.bricks.length,32);stepBreaker(s,.05,.5);assert.equal(s.level,2);});
+test('Breaker separates a reflected ball from a two-hit brick, preventing repeated overlap damage',()=>{const s=newBreaker();s.bricks=[{x:.4,y:.2,w:.1,h:.058,hp:2,id:1}];s.ball={x:.45,y:.28,vx:0,vy:-.8};launchBreaker(s);stepBreaker(s,.05,.5);assert.equal(s.bricks[0].hp,1);assert(s.ball.vy>0);assert.equal(s.level,1);assert.equal(s.score,15);});

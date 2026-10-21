@@ -1,4 +1,4 @@
-import { clamp, tesseract } from './bitcoin.mjs?v=3.0.0';
+import { clamp, tesseract } from './bitcoin.mjs?v=4.0.0';
 export const VERTEX_SHADER = `attribute vec2 position;void main(){gl_Position=vec4(position,0.,1.);}`;
 export const FRAGMENT_SHADER = `
 precision highp float;
@@ -111,7 +111,8 @@ export class Cosmos {
     const dpr=Math.min(devicePixelRatio||1,maxWidth/this.w,1.5);
     this.canvas.width=Math.round(this.w*dpr);this.canvas.height=Math.round(this.h*dpr);
     this.dpr=Math.min(devicePixelRatio||1,1.5);this.overlay.width=Math.round(this.w*this.dpr);this.overlay.height=Math.round(this.h*this.dpr);
-    this.center=this.w<=700?[.5,.68]:[.60,.55];this.cx=this.w*this.center[0];this.cy=this.h*(1-this.center[1]);
+    const anchor=document.querySelector('.orbit-coordinate')?.getBoundingClientRect();
+    this.center=document.body.classList.contains('zen-mode')?[.5,.5]:anchor?[(anchor.left+anchor.width/2-rect.left)/this.w,1-(anchor.top+anchor.height/2-rect.top)/this.h]:[.68,.55];this.cx=this.w*this.center[0];this.cy=this.h*(1-this.center[1]);this.viewportLens=this.w<=760&&!document.body.classList.contains('zen-mode')?Math.min(1,600/this.h):1;
     if(this.gl)this.gl.viewport(0,0,this.canvas.width,this.canvas.height);this.draw();
   }
   configure(options){Object.assign(this,options);if(options.quality){this.low=false;this.resize();}this.draw();this.schedule();}
@@ -135,7 +136,7 @@ export class Cosmos {
     if(!this.ctx)return;
     const {gl,uniforms:u}=this;
     const floating=this.reduced?0:this.drift;const cam=[this.pointer[0]*.35+this.camera[0]*2.5+Math.sin(this.time*.19)*floating*.6,this.pointer[1]*.25+this.camera[1]*2+Math.cos(this.time*.24)*floating*.38];
-    if(gl){gl.uniform2f(u.resolution,this.canvas.width,this.canvas.height);gl.uniform2f(u.center,...this.center);gl.uniform2f(u.pointer,...cam);gl.uniform1f(u.lens,this.lens);gl.uniform1f(u.epoch,this.epoch);gl.uniform1f(u.time,this.time);gl.uniform1f(u.scene,this.scene);gl.uniform1f(u.pulse,this.pulse);gl.uniform1f(u.warp,this.warpAmount||0);gl.drawArrays(gl.TRIANGLES,0,6);}
+    if(gl){gl.uniform2f(u.resolution,this.canvas.width,this.canvas.height);gl.uniform2f(u.center,...this.center);gl.uniform2f(u.pointer,...cam);gl.uniform1f(u.lens,this.lens*this.viewportLens);gl.uniform1f(u.epoch,this.epoch);gl.uniform1f(u.time,this.time);gl.uniform1f(u.scene,this.scene);gl.uniform1f(u.pulse,this.pulse);gl.uniform1f(u.warp,this.warpAmount||0);gl.drawArrays(gl.TRIANGLES,0,6);}
     const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);
     if(!gl)this.fallback(c);
     const count=this.low||this.quality==='low'?400:800;
@@ -153,12 +154,12 @@ export class Cosmos {
     c.restore();
   }
   fallback(c){
-    const r=this.h*.24,g=c.createRadialGradient(this.cx,this.cy,r*.65,this.cx,this.cy,r*1.6);g.addColorStop(0,'#090e18');g.addColorStop(.25,'#191c30');g.addColorStop(.34,'#80604c');g.addColorStop(.38,'#edbd8a');g.addColorStop(.42,'#4d3740');g.addColorStop(.57,'#14192a');g.addColorStop(1,'#080c16');c.fillStyle=g;c.fillRect(0,0,this.w,this.h);
+    const r=this.h*.24*this.viewportLens,g=c.createRadialGradient(this.cx,this.cy,r*.65,this.cx,this.cy,r*1.6);g.addColorStop(0,'#090e18');g.addColorStop(.25,'#191c30');g.addColorStop(.34,'#80604c');g.addColorStop(.38,'#edbd8a');g.addColorStop(.42,'#4d3740');g.addColorStop(.57,'#14192a');g.addColorStop(1,'#080c16');c.fillStyle=g;c.fillRect(0,0,this.w,this.h);
     for(let i=0;i<22;i++){c.beginPath();c.ellipse(this.cx,this.cy,r*(.9+i*.007),r*(.74+i*.005),-.26,0,Math.PI*2);c.strokeStyle=`rgba(255,202,152,${.025+Math.sin(i)*.012})`;c.lineWidth=1;c.stroke();}
   }
   drawDepth(c){
     // Rings and dust occupy different depths; the camera keeps drifting after steering.
-    const t=this.time,scale=this.h*.25;
+    const t=this.time,scale=this.h*.25*this.viewportLens;
     for(let i=0;i<9;i++){
       const z=((i/9+t*.012)%1),radius=scale*(.55+z*2.6)*this.lens;
       c.beginPath();c.ellipse(this.cx,this.cy,radius,radius*.79,-.27+this.camera[0]*.1,0,Math.PI*2);

@@ -1,203 +1,89 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#070a12">
-  <meta name="description" content="Bitcoinの宇宙を操縦・観測・実験。4つの操作空間と4つのミニゲーム。">
-  <meta property="og:title" content="DIMENSION — Bitcoin Interactive Space">
-  <meta property="og:description" content="飛行、ブロック観測、4D操作、2017再生。DIMENSIONのインタラクティブな宇宙。">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://pythonddd.github.io/dimension/">
-  <meta property="og:image" content="https://pythonddd.github.io/dimension/assets/social-card.jpg">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://mempool.space wss://mempool.space https://api.exchange.coinbase.com https://api.coinbase.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
-  <title>DIMENSION — Bitcoin Interactive Space</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/style.css">
-  <link rel="stylesheet" href="assets/experience.css?v=3.0.0">
-  <script type="module" src="assets/app.mjs?v=3.0.0"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<meta name="description" content="Bitcoin、アンビエント、宇宙。Satoshiコンバーター、ライブブロック、4つのゲームをひとつの画面で。">
+<meta property="og:title" content="DIMENSION — Bitcoin, in orbit.">
+<meta property="og:description" content="Satoshi converter · Ambient radio · Live Bitcoin · Four games">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pythonddd.github.io/dimension/">
+<meta property="og:image" content="https://pythonddd.github.io/dimension/assets/social-card.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://mempool.space wss://mempool.space https://api.exchange.coinbase.com https://api.coinbase.com; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>DIMENSION — Bitcoin, in orbit.</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css?v=4.0.0">
+<script type="module" src="assets/app.mjs?v=4.0.0"></script>
 </head>
 <body>
 <svg class="icon-defs" aria-hidden="true"><defs>
-  <symbol id="i-orbit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="11" ry="5" transform="rotate(-35 12 12)"/></symbol>
-  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM15 8c3 2 3 6 0 8M18 4c6 4 6 12 0 16"/></symbol>
-  <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><circle cx="12" cy="12" r="3"/></symbol>
-  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M3 9V3h6m6 0h6v6M3 15v6h6m6 0h6v-6"/></symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
-  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
-  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 6h5l2-3h4l2 3h5v14H3z"/><circle cx="12" cy="13" r="4"/></symbol>
-  <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7zm0 10v10M3 7l9 5 9-5M7 4.8l10 5.5"/></symbol>
-  <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.7 7.3L22 12l-7.3 2.7L12 22l-2.7-7.3L2 12l7.3-2.7z"/></symbol>
-  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="i-orbit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="11" ry="5" transform="rotate(-35 12 12)"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 7h5l2-3h4l2 3h5v13H3z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-expand" viewBox="0 0 24 24"><path d="M3 9V3h6m6 0h6v6M3 15v6h6m6 0h6v-6"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.7 7.3L22 12l-7.3 2.7L12 22l-2.7-7.3L2 12l7.3-2.7z"/></symbol>
 </defs></svg>
-<a class="skip-link" href="#primary-nav">操作メニューへ</a>
-<main id="observatory">
-  <div id="universe" aria-hidden="true"><canvas id="space"></canvas><canvas id="particles"></canvas></div>
-  <div class="vignette" aria-hidden="true"></div>
-  <div class="reticle" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-  <header class="masthead hud">
-    <a class="brand" href="./" aria-label="DIMENSION ホーム"><span class="brand-icon">₿</span><span><strong>DIMENSION<span class="brand-dot">.</span></strong><small>BITCOIN / INTERACTIVE SPACE</small></span></a>
-    <nav id="primary-nav" aria-label="メインナビゲーション">
-      <button class="nav-link active" data-home>コックピット</button>
-      <button class="nav-link" data-panel="network">ネットワーク</button>
-      <button class="nav-link" data-panel="history">タイムマシン <span class="nav-tag">2017</span></button>
-      <button class="nav-link" data-panel="lab">クリプト・ラボ</button><button class="nav-link mobile-only" data-panel="market">市場</button><button class="nav-link mobile-only" data-panel="about">設定・音量</button>
-    </nav>
-    <div class="header-tools">
-      <button class="sound-button" id="audio-toggle" aria-label="環境音をオンにする" aria-pressed="false" title="環境音 [M]"><svg><use href="#i-sound"/></svg><span id="audio-label">音を開始</span><span class="audio-meter" aria-hidden="true"><i></i><i></i><i></i></span></button><label class="sound-volume" title="音量"><span class="sr-only">音量</span><input id="quick-volume" type="range" min="0" max="0.7" step="0.01" value="0.42"></label>
-      <button class="icon-button" id="zen-toggle" aria-label="没入モード" aria-pressed="false" title="没入モード [Z]"><svg><use href="#i-focus"/></svg></button>
-      <button id="mobile-menu" class="icon-button" aria-label="ツールメニュー" aria-expanded="false" aria-controls="primary-nav">☰</button><button class="icon-button" id="fullscreen-toggle" aria-label="全画面表示" title="全画面 [F]"><svg><use href="#i-expand"/></svg></button>
-    </div>
-  </header>
-
-  <section class="station hud" aria-label="次元の操作パネル">
-    <div class="station-topline"><span class="signal-dot" id="signal-dot"></span><span id="connection-label">接続中</span><span id="journey-time">00:00:00</span></div>
-    <section data-station="0">
-      <div class="station-number">01 <span>FLIGHT DECK</span></div><h1>ワームホール</h1>
-      <div class="instrument"><span>航行距離 <small>SIMULATION</small></span><strong><output id="flight-distance">0.00</output> <small>ly</small></strong></div>
-      <div class="station-controls"><label for="gravity">重力レンズ <output id="gravity-value">1.0×</output></label><input id="gravity" type="range" min="0.65" max="1.6" step="0.05" value="1"><label for="drift">浮遊の強さ <output id="drift-value">70%</output></label><input id="drift" type="range" min="0" max="1" step="0.1" value="0.7"></div>
-      <div class="station-actions"><button id="flight-boost" class="secondary-button">推進ブースト ↗</button><button id="flight-reset" class="quiet-button">姿勢を戻す</button></div>
-      <p class="control-hint">宇宙をドラッグして操縦<br>矢印キー / WASD · ホイールで接近</p>
-      <button class="game-entry" data-play="flight"><span class="game-entry-symbol">⌁</span><span><small>ARCADE / 01</small><strong>SATS SURFER</strong><em>60秒の飛行 · 回収と回避</em></span><b>↗</b></button>
-    </section>
-    <section data-station="1" hidden>
-      <div class="station-number">02 <span>CHAIN OBSERVATORY</span></div><h1>サトシの銀河</h1>
-      <div class="instrument"><span>選択したブロック</span><strong id="orbit-height">—</strong></div>
-      <dl class="orbit-details"><div><dt>採掘プール</dt><dd id="orbit-pool">取得待ち</dd></div><div><dt>取引数</dt><dd id="orbit-transactions">—</dd></div><div><dt>重量</dt><dd id="orbit-weight">—</dd></div><div><dt>採掘時刻 / UTC</dt><dd id="orbit-time">—</dd></div></dl>
-      <p id="orbit-freshness" class="control-hint">ブロックを受信中</p><a id="orbit-explorer" class="text-button" target="_blank" rel="noopener noreferrer" hidden>このブロックを開く ↗</a>
-      <p class="control-hint">軌道上のブロックを選択 · ← → で移動</p>
-      <button class="game-entry" data-play="route"><span class="game-entry-symbol">ϟ</span><span><small>ARCADE / 02</small><strong>LIGHTNING LINK</strong><em>容量を読み、最短の経路をつなぐ</em></span><b>↗</b></button>
-    </section>
-    <section data-station="2" hidden>
-      <div class="station-number">03 <span>4D WORKBENCH</span></div><h1>テセラクト</h1>
-      <div class="geometry-count"><span><b>16</b> 頂点</span><span><b>32</b> 辺</span><span><b>8</b> 立方体</span></div>
-      <div class="station-controls axis-controls"><label for="axis-xw">X ↔ W <output id="axis-xw-value">0°</output></label><input id="axis-xw" type="range" min="0" max="360" value="0"><label for="axis-yw">Y ↔ W <output id="axis-yw-value">0°</output></label><input id="axis-yw" type="range" min="0" max="360" value="0"><label for="axis-zw">Z ↔ W <output id="axis-zw-value">0°</output></label><input id="axis-zw" type="range" min="0" max="360" value="0"><label for="projection">4Dの視点距離 <output id="projection-value">3.5</output></label><input id="projection" type="range" min="2.5" max="5" step="0.1" value="3.5"></div>
-      <div class="station-actions"><button id="rotation-toggle" class="secondary-button" aria-pressed="true">自動回転 ON</button><button id="rotation-reset" class="quiet-button">リセット</button></div>
-      <button class="game-entry" data-play="block"><span class="game-entry-symbol">◇</span><span><small>ARCADE / 03</small><strong>BLOCK BUILDER</strong><em>容量100に、手数料を詰め込む</em></span><b>↗</b></button>
-    </section>
-    <section data-station="3" hidden>
-      <div class="station-number">04 <span>2017 TIME DECK</span></div><h1>2017</h1>
-      <div class="instrument"><span id="epoch-date">2017-01-01 / UTC</span><strong id="epoch-price">—</strong><small id="epoch-change">履歴を読み込み中</small></div>
-      <label class="control-hint" for="epoch-scrub">日付を移動</label><input id="epoch-scrub" type="range" min="0" max="364" value="0" disabled>
-      <div class="epoch-markers"><button data-day="0">01 / 01</button><button data-day="234">08 / 23</button><button data-day="350">12 / 17</button></div>
-      <div class="station-actions"><button id="epoch-play" class="secondary-button" disabled>▶ 再生</button><select id="epoch-speed" aria-label="2017の再生速度"><option value="450">標準</option><option value="120">高速</option><option value="1200">ゆっくり</option></select><button id="epoch-retry" class="quiet-button" hidden>再取得</button></div>
-      <p class="control-hint">Coinbase BTC-USD · 日足終値<br>日付と価格に連動する空と音</p>
-      <button class="game-entry" data-play="echo"><span class="game-entry-symbol">⌘</span><span><small>ARCADE / 04</small><strong>HASH ECHO</strong><em>光と音の順番を記憶する</em></span><b>↗</b></button>
-    </section>
-  </section>
-  <section id="world-stage" class="world-stage hud" aria-label="宇宙の操作エリア">
-    <div id="flight-surface" tabindex="0" aria-label="飛行操作。ドラッグまたは矢印キーで操縦" data-world="0"><div class="flight-crosshair" aria-hidden="true"><span></span><i></i></div><div class="flight-readout"><span id="flight-bearing">YAW 0° / PITCH 0°</span><span>DRAG TO STEER</span></div></div>
-    <div id="orbit-field" class="orbit-field" data-world="1" hidden><div class="orbit-guide" aria-hidden="true"></div><div id="orbit-nodes"></div><p id="orbit-empty">ネットワークに接続中…</p></div>
-    <div class="geometry-readout" data-world="2" hidden><span>4D → 3D → 2D</span><span id="geometry-mode">AUTO ROTATION</span></div>
-    <div class="epoch-display" data-world="3" hidden><span id="epoch-month">JAN</span><div id="epoch-chart"></div><span class="control-hint">2017 / BTC–USD / UTC</span></div>
-  </section>
-
-  <aside class="telemetry hud" aria-label="Bitcoin ライブ観測">
-    <div class="panel-kicker"><span>BTC / NETWORK</span><span class="live-pill" id="live-pill">接続中</span></div>
-    <div class="price-head"><span class="coin-mark">₿</span><div><strong>Bitcoin</strong><small>BTC / USD · Coinbase</small></div><span id="price-change" class="price-change">—</span></div>
-    <div class="price-value" id="btc-price">—<span>.—</span></div>
-    <small id="quote-freshness" class="quote-freshness">未受信</small><div class="price-secondary"><span id="btc-jpy">JPY 接続待ち</span><button class="text-button small" data-panel="market">市場を見る ↗</button></div>
-    <button id="telemetry-toggle" class="telemetry-toggle" aria-expanded="false" aria-controls="telemetry-details">観測データを開く ＋</button><div id="telemetry-details" hidden><div id="mini-chart" class="mini-chart" aria-label="Bitcoin 過去24時間の時間足終値"><span class="empty-inline">価格の軌跡を受信中</span></div>
-    <div class="chart-caption"><span>24H / USD</span><span id="price-time">データ未受信</span></div>
-    <div class="network-totals"><div><span>最新ブロック</span><strong id="block-height">—</strong></div><div><span>未承認取引</span><strong id="mempool-count">—</strong></div></div>
-    <div class="block-heading"><span>RECENT BLOCKS</span><button class="text-button small" data-panel="network">すべて ↗</button></div>
-    <div id="recent-blocks" class="recent-blocks"><div class="empty-inline">ブロックと交信しています…</div></div>
-    <button class="fee-summary" data-panel="network"><span><svg><use href="#i-spark"/></svg>優先手数料</span><strong id="quick-fee">— sat/vB</strong><span>↗</span></button>
-  </div></aside>
-
-  <section class="flight-deck hud" aria-label="宇宙の操作">
-    <div class="destination-heading"><span class="tiny-label">DIMENSIONS / 1 — 4</span><span id="scene-description">操縦 / 重力レンズ / 飛行ゲーム</span></div>
-    <div class="destinations" role="group" aria-label="次元を選ぶ">
-      <button class="destination selected" data-scene="wormhole" aria-pressed="true"><span class="world-icon wormhole-icon"></span><span><small>01 / PILOT</small><strong>ワームホール</strong></span><span class="destination-arrow">↗</span></button>
-      <button class="destination" data-scene="galaxy" aria-pressed="false"><span class="world-icon galaxy-icon"></span><span><small>02 / OBSERVE</small><strong>サトシの銀河</strong></span><span class="destination-arrow">↗</span></button>
-      <button class="destination" data-scene="tesseract" aria-pressed="false"><span class="world-icon cube-icon"><svg><use href="#i-cube"/></svg></span><span><small>03 / ROTATE</small><strong>テセラクト</strong></span><span class="destination-arrow">↗</span></button>
-      <button class="destination" data-scene="genesis" aria-pressed="false"><span class="world-icon genesis-icon"></span><span><small>04 / REPLAY</small><strong>2017</strong></span><span class="destination-arrow">↗</span></button>
-    </div>
-    <div class="flight-controls">
-      <button class="control-button" id="pause-toggle" aria-pressed="false" title="アニメーションの停止 [Space]">Ⅱ <span>一時停止</span></button>
-      <div class="speed-control"><label for="speed">航行速度</label><input id="speed" type="range" min="0.1" max="2" step="0.1" value="0.5"><output for="speed" id="speed-value">0.5×</output></div>
-      <button class="control-button" id="autopilot-toggle" aria-pressed="false"><span class="small-dot"></span> 自動周遊</button>
-      <button class="control-button" id="capture" title="宇宙の壁紙を保存"><svg><use href="#i-camera"/></svg><span>撮影</span></button>
-      <button class="warp-button" id="warp">WARP <svg><use href="#i-arrow"/></svg></button>
-    </div>
-  </section>
-  <footer class="statusbar hud"><span><span class="small-dot"></span> <span id="universe-label">WORMHOLE</span> <span class="status-separator">/</span> <span id="render-mode">PROCEDURAL UNIVERSE</span></span><button class="text-button small" data-panel="about">データ出典・操作ガイド <span>↗</span></button><span class="footer-motto"><span id="audio-state">AUDIO OFF</span></span></footer>
-  <button id="zen-exit" class="zen-exit" hidden><svg><use href="#i-focus"/></svg> 操作に戻る <kbd>Z</kbd></button>
-  <div id="block-celebration" class="block-celebration" hidden role="status"><svg><use href="#i-cube"/></svg><span>NEW BLOCK</span><strong id="celebration-height"></strong><small>Bitcoinの新しいブロックを受信</small></div>
+<a class="skip-link" href="#converter">コンバーターへ</a>
+<header class="masthead">
+<a href="./" class="brand" aria-label="DIMENSION ホーム"><svg><use href="#i-orbit"/></svg><span>DIMENSION<span class="orange">.</span></span></a>
+<div class="radio" aria-label="音楽プレーヤー">
+<button id="audio-toggle" class="audio-button" aria-pressed="false"><span id="audio-symbol">▶</span><span id="audio-label">音楽を再生</span></button>
+<span class="radio-divider"></span>
+<label class="sr-only" for="music-mode">音楽</label><select id="music-mode"><option value="ambient">DEEP ORBIT · Ambient</option><option value="jazz">BLUE HOUR · Jazzy</option></select>
+<label class="volume-label"><span>VOL</span><input id="volume" type="range" min="0" max="80" value="48" aria-label="音量"></label>
+<div class="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+</div>
+<button id="zen" class="icon-button" aria-label="宇宙だけを眺める" aria-pressed="false"><svg><use href="#i-expand"/></svg></button>
+</header>
+<main>
+<section class="hero" aria-label="Bitcoin の宇宙とコンバーター">
+<div id="universe" aria-hidden="true"><canvas id="space"></canvas><canvas id="particles"></canvas></div><div class="hero-shade" aria-hidden="true"></div>
+<div class="hero-top"><span class="eyebrow"><span class="dot"></span> BITCOIN / IN ORBIT</span><div class="market"><span>BTC / USD</span><strong id="btc-price">—</strong><small id="btc-change">取得中</small></div></div>
+<div class="hero-content">
+<section id="converter" class="converter" aria-labelledby="converter-title">
+<div class="section-kicker"><h1 id="converter-title">SATOSHI CONVERTER</h1><span>01 / ∞</span></div>
+<div class="amount-line"><input id="convert-amount" type="text" inputmode="decimal" value="1" maxlength="24" aria-label="換算する金額"><label class="sr-only" for="convert-currency">換算元の通貨</label><select id="convert-currency"><option value="SAT">sat</option><option value="BTC">BTC</option><option value="JPY">JPY</option><option value="USD">USD</option><option value="STX">STX</option><option value="GMT">GMT</option><option value="SOL">SOL</option><option value="ETH">ETH</option></select></div>
+<div class="converter-tools"><p id="btc-equivalent">= 0.00000001 BTC</p><div class="presets" aria-label="Satoshi 金額を入力"><button data-amount="1">1 sat</button><button data-amount="1000">1k</button><button data-amount="100000">100k</button></div></div>
+<p id="convert-error" class="input-error" role="status"></p>
+<div class="rate-grid">
+<button class="rate" data-copy-rate="JPY" aria-label="日本円の換算額をコピー"><span class="coin fiat">¥</span><span><small>日本円 <em>JPY</em></small><strong id="rate-JPY">—</strong></span></button>
+<button class="rate" data-copy-rate="USD" aria-label="米ドルの換算額をコピー"><span class="coin fiat">$</span><span><small>米ドル <em>USD</em></small><strong id="rate-USD">—</strong></span></button>
+<button class="rate" data-copy-rate="STX" aria-label="Stacks の換算額をコピー"><span class="coin stx">Ӿ</span><span><small>Stacks <em>STX</em></small><strong id="rate-STX">—</strong></span></button>
+<button class="rate" data-copy-rate="GMT" aria-label="GMT の換算額をコピー"><span class="coin gmt">G</span><span><small>STEPN <em>GMT</em></small><strong id="rate-GMT">—</strong></span></button>
+<button class="rate" data-copy-rate="SOL" aria-label="Solana の換算額をコピー"><span class="coin sol">≋</span><span><small>Solana <em>SOL</em></small><strong id="rate-SOL">—</strong></span></button>
+<button class="rate" data-copy-rate="ETH" aria-label="Ethereum の換算額をコピー"><span class="coin eth">◇</span><span><small>Ethereum <em>ETH</em></small><strong id="rate-ETH">—</strong></span></button>
+</div>
+<div class="rate-footer"><span id="rate-status">レートを取得中…</span><button id="refresh-rates" class="text-button" aria-label="レートを更新">↻ 更新</button></div>
+<p class="fineprint">Coinbase 参考レート · 数値を押すとコピー</p>
+</section>
+<div class="orbit-space">
+<div class="orbit-coordinate"><span>₿</span><small>21,000,000 BTC</small></div>
+<div class="orbit-block"><span class="eyebrow">LATEST BLOCK</span><strong id="orbit-height"># —</strong><span id="orbit-time">ネットワークに接続中</span></div>
+<div class="cosmic-controls"><button id="warp" class="warp-button"><svg><use href="#i-spark"/></svg> WARP</button><label>DRIFT<input id="drift" type="range" min="0" max="100" value="65" aria-label="浮遊の強さ"></label><button id="motion" class="icon-button" aria-label="宇宙の動きを止める" aria-pressed="false">Ⅱ</button><button id="capture" class="icon-button" aria-label="宇宙を画像で保存"><svg><use href="#i-camera"/></svg></button></div>
+</div>
+</div>
+<div class="stream"><div class="stream-label"><span class="dot" id="stream-dot"></span><span>MEMPOOL<br><small id="stream-status">CONNECTING</small></span></div><div id="tx-stream" class="tx-stream"><span class="stream-empty">未承認トランザクションを取得中…</span></div></div>
+</section>
+<div class="content-wrap">
+<section class="network-grid" aria-label="Bitcoin ライブネットワーク">
+<article class="network-card block-card"><div class="card-top"><h2><span class="tiny-icon">◈</span> Block pulse</h2><span id="network-status" class="status-pill">接続中</span></div><div class="block-heading"><div><span class="eyebrow">BLOCK HEIGHT</span><strong id="block-height">—</strong></div><div class="block-age"><strong id="block-age">—</strong><span id="block-age-label">最後のブロックから</span></div></div><div id="block-chain" class="block-chain" aria-label="最新6ブロック"></div><div class="block-detail"><span id="block-transactions">— transactions</span><span id="block-size">— MB</span></div><p class="fineprint">新しいブロックで宇宙が光る。生成間隔は平均約10分。</p></article>
+<article class="network-card fee-card"><div class="card-top"><h2><span class="tiny-icon">ϟ</span> Fee radar</h2><span id="mempool-count" class="muted">— tx</span></div><div class="fee-levels"><div><span>優先</span><strong id="fee-fast">—</strong><small>sat/vB</small></div><div><span>標準</span><strong id="fee-normal">—</strong><small>sat/vB</small></div><div><span>ゆっくり</span><strong id="fee-slow">—</strong><small>sat/vB</small></div></div><div class="fee-calc"><label for="tx-size">取引サイズ</label><span><input id="tx-size" type="number" min="1" max="100000" step="1" value="140"> vB</span><strong id="fee-cost">— sats</strong></div><p id="fee-fiat" class="fineprint">標準レートの目安 · mempool.space</p></article>
+<article class="network-card hash-card"><div class="card-top"><h2><span class="tiny-icon">✳</span> Hash canvas</h2><button id="hash-save" class="text-button">PNG ↓</button></div><div class="hash-visual"><canvas id="hash-canvas" width="480" height="320" aria-label="SHA-256 ハッシュから生成した幾何学模様"></canvas><span id="hash-origin">LATEST BLOCK</span></div><label class="sr-only" for="hash-input">模様にする文字</label><div class="hash-input"><input id="hash-input" maxlength="160" placeholder="好きな文字から、模様をつくる" autocomplete="off"><button id="hash-live" aria-label="最新ブロックの模様に戻す">↻</button></div><p id="hash-value" class="hash-value">ブロックハッシュを待っています</p></article>
+</section>
+<section class="arcade-section" aria-labelledby="arcade-title"><div class="arcade-heading"><div><span class="eyebrow">ARCADE / 04 GAMES</span><h2 id="arcade-title">Play in orbit<span class="orange">.</span></h2></div><div class="arcade-note"><label><input id="game-sound" type="checkbox" checked> Hash Echo の音</label><span>スコアはこの端末に保存 · ゲーム内ポイント</span></div></div>
+<div class="game-grid">
+<article class="game-card echo-card" id="echo-card" aria-labelledby="echo-title"><div class="game-heading"><div><span class="game-number">01 / MEMORY</span><h3 id="echo-title">Hash Echo</h3></div><div class="score"><small>SCORE <span id="echo-best">BEST 0</span></small><strong id="echo-score">0</strong></div></div><p class="game-instruction">光った順番を、そのまま。<kbd>1</kbd>〜<kbd>4</kbd>でも操作。</p><div class="echo-board" id="echo-board" tabindex="0" aria-label="Hash Echo 操作盤"><button class="echo-pad" data-pad="0" aria-label="1 Bitcoin" disabled><span>₿</span><small>01</small></button><button class="echo-pad" data-pad="1" aria-label="2 Lightning" disabled><span>ϟ</span><small>02</small></button><button class="echo-pad" data-pad="2" aria-label="3 Diamond" disabled><span>◇</span><small>03</small></button><button class="echo-pad" data-pad="3" aria-label="4 Infinity" disabled><span>∞</span><small>04</small></button><span class="echo-center" id="echo-round">01</span></div><div class="game-status" id="echo-status" role="status">12ラウンド。どこまで覚えられる？</div><div class="game-footer"><button id="echo-start" class="primary-button">スタート <span>↗</span></button><button id="echo-pause" class="secondary-button" disabled>一時停止</button><button id="echo-reset" class="text-button">リセット</button></div></article>
+<article class="game-card merge-card" id="merge-card" aria-labelledby="merge-title"><div class="game-heading"><div><span class="game-number">02 / MERGE</span><h3 id="merge-title">Sats Merge</h3></div><div class="score"><small>SCORE <span id="merge-best">BEST 0</span></small><strong id="merge-score">0</strong></div></div><p class="game-instruction">同じ数字を重ねて、2048へ。スワイプ / <kbd>↑↓←→</kbd></p><div id="merge-board" class="merge-board" tabindex="0" role="group" aria-label="Sats Merge 4 × 4 盤面。矢印キーまたはスワイプで移動"></div><div id="merge-status" class="game-status" role="status">まずは、どちらかにスワイプ。</div><div class="game-footer"><div class="direction-buttons" aria-label="タイルを動かす"><button data-merge="left" aria-label="左へ">←</button><button data-merge="up" aria-label="上へ">↑</button><button data-merge="down" aria-label="下へ">↓</button><button data-merge="right" aria-label="右へ">→</button></div><button id="merge-undo" class="text-button" disabled>1手戻す</button><button id="merge-reset" class="text-button">リセット</button></div></article>
+<article class="game-card breaker-card" id="breaker-card" aria-labelledby="breaker-title"><div class="game-heading"><div><span class="game-number">03 / BREAKOUT</span><h3 id="breaker-title">Block Breaker</h3></div><div class="score"><small>SCORE <span id="breaker-best">BEST 0</span></small><strong id="breaker-score">0</strong></div></div><p class="game-instruction">パドルで跳ね返してブロックを壊す。ドラッグ / <kbd>← →</kbd></p><div class="breaker-stage"><canvas id="breaker-canvas" width="840" height="600" tabindex="0" aria-label="Block Breaker。左右キーかドラッグでパドル操作、スペースで発射または一時停止"></canvas><div class="breaker-readout"><span id="breaker-level">LEVEL 01</span><span id="breaker-lives" aria-label="残り3ライフ">● ● ●</span></div><div id="breaker-overlay" class="breaker-overlay"><span>BREAK THE BLOCK.</span><small>下のボタンで発射</small></div></div><div id="breaker-status" class="game-status" role="status">6連続ヒットでパドルがワイドに。</div><div class="game-footer"><button id="breaker-start" class="primary-button">ボールを発射 <span>↗</span></button><button id="breaker-pause" class="secondary-button" disabled>一時停止</button><button id="breaker-reset" class="text-button">リセット</button></div></article>
+<article class="game-card match-card" id="match-card" aria-labelledby="match-title"><div class="game-heading"><div><span class="game-number">04 / MATCH 3</span><h3 id="match-title">Chain Match</h3></div><div class="score"><small>SCORE <span id="match-best">BEST 0</span></small><strong id="match-score">0</strong></div></div><p class="game-instruction">隣同士を入れ替えて3つ揃える。連鎖でスコアアップ。</p><div id="match-board" class="match-board" role="group" aria-label="Chain Match 7 × 7 盤面"></div><div id="match-status" class="game-status" role="status">残り20手。2つのコインを選んで交換。</div><div class="game-footer"><button id="match-hint" class="secondary-button">ヒント <span>✧</span></button><span id="match-moves" class="moves-count">20 MOVES</span><button id="match-reset" class="text-button">リセット</button></div></article>
+</div></section>
+<footer class="footer"><a class="brand" href="./"><svg><use href="#i-orbit"/></svg><span>DIMENSION<span class="orange">.</span></span></a><span>BITCOIN · AMBIENT · ARCADE</span><div><span id="render-status">COSMIC ENGINE</span><a href="https://github.com/pythonDDD/dimension" target="_blank" rel="noopener noreferrer">SOURCE ↗</a></div></footer>
+</div>
 </main>
-
-
-<dialog id="arcade" aria-labelledby="game-title">
-  <header class="game-header"><div><span class="eyebrow" id="game-kicker">ARCADE / 01</span><h2 id="game-title">SATS SURFER</h2></div><div class="game-header-tools"><button id="game-sound" class="secondary-button">音を開始</button><button id="game-close" class="icon-button" aria-label="ゲームを閉じる"><svg><use href="#i-close"/></svg></button></div></header>
-  <div class="game-meta"><span id="game-rule"></span><span>BEST <b id="game-best">0</b></span></div>
-  <div class="game-scoreboard"><span id="game-progress">READY</span><strong id="game-score">0 <small>PTS</small></strong><span id="game-extra"></span></div>
-  <div class="game-view" data-game="flight"><canvas id="flight-game" tabindex="0" aria-label="Sats Surfer。ドラッグまたは矢印キーで操縦。金色の輪を回収し、赤い障害物を回避。"></canvas><span class="game-canvas-hint">ドラッグ / ↑ ↓ ← → / WASD</span></div>
-  <div class="game-view" data-game="route" hidden><div id="route-board" class="route-board"><svg id="route-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg><div id="route-nodes"></div></div><div class="route-legend"><span><i></i> 容量 ≥ 50</span><span class="blocked"><i></i> 容量不足</span><span>線の数字：コスト / 容量</span></div><div class="route-path" id="route-path">A → … → I</div></div>
-  <div class="game-view" data-game="block" hidden><div class="block-capacity"><span>BLOCK CAPACITY</span><strong id="block-used">0 / 100</strong><div><i id="block-fill"></i></div></div><div id="block-cards" class="block-cards"></div><p class="control-hint">カードを選択してブロックへ。容量を超えずに、合計手数料を最大化。単位はゲーム内のモデル値。</p></div>
-  <div class="game-view" data-game="echo" hidden><div class="echo-pads"><button data-pad="0"><span>₿</span><small>1 / C</small></button><button data-pad="1"><span>ϟ</span><small>2 / E</small></button><button data-pad="2"><span>◇</span><small>3 / G</small></button><button data-pad="3"><span>∞</span><small>4 / C′</small></button></div><p class="control-hint">点灯した順番をクリック · キー 1–4 · 音なしでも遊べます</p></div>
-  <div id="game-result" class="game-result" hidden></div>
-  <footer class="game-footer"><p id="game-status" role="status">開始するとゲームが動きます</p><div><button id="game-undo" class="secondary-button" hidden>1つ戻す</button><button id="game-pause" class="secondary-button" hidden>一時停止</button><button id="game-restart" class="secondary-button" hidden>やり直す</button><button id="game-action" class="primary-button">開始</button></div></footer>
-  <div class="game-local-note">LOCAL ARCADE · スコアはこの端末に保存 · 実際の送金・報酬はありません</div>
-</dialog>
-
-<dialog id="drawer" aria-labelledby="drawer-title">
-  <div class="drawer-header"><div><span class="eyebrow" id="drawer-kicker">OBSERVATORY</span><h2 id="drawer-title">ネットワーク</h2></div><button class="icon-button" id="drawer-close" aria-label="パネルを閉じる"><svg><use href="#i-close"/></svg></button></div>
-  <div class="drawer-content">
-    <section data-view="network" hidden>
-
-      <div class="source-line"><a href="https://mempool.space/" target="_blank" rel="noopener noreferrer">mempool.space ↗</a><span id="network-time">未受信</span><button class="text-button small" id="refresh-data">再取得 ↻</button></div>
-      <div class="stat-grid"><article><span>ブロック高</span><strong id="detail-height">—</strong><small>最後のブロック <span id="block-age">—</span></small></article><article><span>未承認の取引</span><strong id="detail-mempool">—</strong><small id="mempool-size">— vMB</small></article></div>
-      <h3>最近のブロック <span class="section-en">RECENTLY MINED</span></h3><div id="block-list" class="block-list"><p class="empty-inline">データを受信すると、ここに表示します。</p></div>
-      <h3>いまの送信手数料 <span class="section-en">sat/vB</span></h3>
-      <div class="fees-grid"><div><span>優先</span><strong id="fee-fast">—</strong></div><div><span>約30分</span><strong id="fee-medium">—</strong></div><div><span>約1時間</span><strong id="fee-slow">—</strong></div><div><span>節約</span><strong id="fee-economy">—</strong></div></div>
-      <p class="fine-print" id="fees-time">取得待ち。手数料はmempool.spaceによる推定。承認時間は保証されません。</p>
-      <div class="fee-calculator"><label for="tx-size">取引サイズ（vB）</label><input id="tx-size" type="number" min="1" max="100000" value="140"><span id="fee-cost">優先送信の概算 —</span></div>
-      <h3>次の半減期へ <span class="section-en">BLOCK COUNTDOWN</span></h3><div class="halving-box"><div><span id="halving-target">BLOCK —</span><strong id="halving-remaining">— blocks</strong></div><div class="progress-track"><span id="halving-progress"></span></div><p id="halving-estimate">ブロック高を待っています。</p><small>日数は残りブロック数×10分の目安。日付を約束するものではありません。</small></div>
-      <div class="stat-grid compact"><article><span>現在のブロック補助金</span><strong id="subsidy">— BTC</strong></article><article><span>理論発行量</span><strong id="supply">— BTC</strong></article></div><p class="fine-print">理論発行量は各ブロックの最大補助金の累計（Genesisを含む）。実流通量や紛失量は表しません。</p>
-      <div class="difficulty-line"><span>次回の難易度調整（推定）</span><strong id="difficulty">—</strong></div>
-      <h3>最近の未承認取引 <span class="section-en">RECENT TRANSACTIONS</span></h3><p class="fine-print">最近の未承認取引の一部。取引所の売買や全ネットワークの送信一覧ではありません。</p><div id="tx-list" class="tx-list"><p class="empty-inline">取得待ち</p></div>
-    </section>
-
-    <section data-view="market" hidden>
-
-      <div class="source-line"><a href="https://www.coinbase.com/price/bitcoin" target="_blank" rel="noopener noreferrer">Coinbase Exchange / USD ↗</a><span id="market-time">未受信</span></div>
-      <div class="market-head"><strong id="market-price">—</strong><span id="market-change">—</span></div>
-      <div class="segmented" role="group" aria-label="価格チャートの期間"><button class="active" data-range="1" aria-pressed="true">24時間</button><button data-range="7" aria-pressed="false">7日</button><button data-range="30" aria-pressed="false">30日</button></div>
-      <div id="market-chart" class="large-chart"><p class="empty-inline">チャートを受信中</p></div><p class="fine-print" id="chart-note">過去の終値を表示します。</p>
-      <div class="stat-grid compact"><article><span>24時間 高値</span><strong id="price-high">—</strong></article><article><span>24時間 安値</span><strong id="price-low">—</strong></article></div>
-      <h3>ETH / SOL <span class="section-en">CRYPTO ORBITS</span></h3><div id="market-watch" class="market-watch"><p class="empty-inline">ETH / SOL を取得中</p></div>
-      <p class="fine-print">価格は各市場の観測値です。描画上の星や軌道はアート表現であり、価格予測ではありません。</p>
-    </section>
-
-    <section data-view="history" hidden>
-      <div class="time-machine"><span class="tiny-label">HISTORICAL RECORDS</span><div class="year-type">2017</div></div>
-      <div class="segmented" role="group" aria-label="Bitcoinの歴史"><button data-era="genesis">2009</button><button data-era="pizza">2010</button><button data-era="segwit" class="active">2017</button><button data-era="halving">2024</button></div>
-      <article class="history-story"><span class="eyebrow" id="history-date">2017 / BLOCK 481,824</span><h3 id="history-title">SegWit有効化</h3><p id="history-description">取引の署名データを分離するアップグレードが有効化。ブロック481,824から適用。</p><a id="history-source" href="https://github.com/bitcoin/bitcoin/blob/master/src/kernel/chainparams.cpp" target="_blank" rel="noopener noreferrer">記録を読む ↗</a></article>
-      <h3>2017年の価格再生 <span class="section-en">PRICE REPLAY</span></h3><p class="fine-print">Coinbase BTC-USDの日足終値（UTC）。過去の記録を日付で選択・再生できます。</p>
-      <div class="replay-head"><span id="replay-date">2017年の記録を読み込んでいます</span><strong id="replay-price">—</strong></div><div id="history-chart" class="large-chart"><p class="empty-inline">履歴を取得中</p></div>
-      <label class="sr-only" for="history-scrub">2017年の日付</label><input id="history-scrub" class="wide-range" type="range" min="0" max="364" value="0" disabled><div class="replay-controls"><button class="primary-button" id="replay-toggle" disabled>▶ 2017年を再生</button><button class="secondary-button" id="history-retry" hidden>再取得</button><button class="secondary-button" id="back-to-2017">2017の宇宙へ ↗</button></div>
-      <div class="history-calculator"><h3>あの日の100ドルはいま？</h3><label for="past-usd">当時の購入額（USD）</label><input id="past-usd" type="number" min="0" max="100000000" value="100"><p id="past-result">日付と現在価格を受信すると計算します。</p><small>選択日の終値で購入した仮定。手数料・税・為替は含みません。</small></div>
-    </section>
-
-    <section data-view="lab" hidden>
-
-      <div class="lab-tabs segmented" role="group" aria-label="ラボの機能"><button data-lab="convert" class="active" aria-pressed="true">sats換算</button><button data-lab="miner" aria-pressed="false">採掘パズル</button><button data-lab="message" aria-pressed="false">チェーン探検</button><button data-lab="passport" aria-pressed="false">旅の記録</button></div>
-      <div data-lab-view="convert"><h3>sats / BTC / 通貨換算</h3><p class="fine-print">1 BTC = 100,000,000 sats。円価格はmempool.space、米ドル価格はCoinbaseの観測値です。</p><div class="converter-input"><label for="convert-amount">いくら？</label><div><input id="convert-amount" type="number" min="0" max="10000000000000000" step="any" value="10000"><select id="convert-unit" aria-label="換算元の単位"><option>sats</option><option>BTC</option><option>JPY</option><option>USD</option></select></div></div><div id="converter-results" class="converter-results"></div><p class="fine-print" id="converter-time">価格取得待ち</p><div class="sats-visual" aria-hidden="true">₿<span>1 BTC = 100,000,000 SATS</span></div></div>
-      <div data-lab-view="miner" hidden><h3>SHA-256パズル</h3><p>先頭に0が並ぶSHA-256ハッシュを探すパズル。入力した文字列とnonceを使って計算します。</p><p class="notice">学習用の単一SHA-256パズルです。実際のBitcoin採掘・報酬はありません。1回最大30秒。</p><label for="mining-message">ブロックに入れる言葉</label><input id="mining-message" type="text" value="Bitcoin 2017" maxlength="120"><label for="mining-difficulty">難しさ（先頭の0の個数）</label><select id="mining-difficulty"><option value="2">00 — 約256回に1回</option><option value="3" selected>000 — 約4,096回に1回</option><option value="4">0000 — 約65,536回に1回</option></select><div class="hash-console"><span id="mining-status">READY</span><code id="mining-hash">????????????????????????????????????????????????????????????????</code><small id="mining-count">0 hashes</small></div><button class="primary-button" id="mining-start">採掘パズルを始める ↗</button><button class="secondary-button" id="mining-stop" hidden>停止する</button></div>
-      <div data-lab-view="message" hidden><h3>取引・テキストの照会</h3><p>TXIDから取引の記録とOP_RETURNのテキストを表示します。</p><form id="tx-form"><label for="tx-id">トランザクションID（64桁）</label><input id="tx-id" type="text" placeholder="64桁のTXID" maxlength="64" autocomplete="off" spellcheck="false" required><button class="primary-button" type="submit" id="tx-submit">記録を読み込む ↗</button></form><div class="sample-links"><button class="text-button small" id="example-tx">元サイトの Internet Cat を読む ↗</button></div><div id="tx-result" class="tx-result" role="status">テキストが記録されていない取引もあります。</div><details><summary>読み取れる記録について</summary><p class="fine-print">OP_RETURNのUTF-8テキストと、複数のP2PKH出力に含まれる印字可能なテキスト候補を表示します。P2PKHは推定で、分割された連続取引・全Ordinalsの復元には対応しません。外部のHTMLやスクリプトは実行しません。</p></details></div>
-      <div data-lab-view="passport" hidden><h3>達成記録</h3><p class="fine-print">達成状況はこのブラウザに保存します。</p><div id="achievements" class="achievements"></div><button class="secondary-button" id="share-journey">この次元のリンクをコピー ↗</button><p id="share-fallback" class="fine-print" hidden></p></div>
-    </section>
-
-    <section data-view="about" hidden>
-      <p>1–4で宇宙を切り替え、各パネルから操作・ゲームを開始できます。音は「音を開始」、表示を隠すにはZ。ワームホールは中央をドラッグして操縦します。</p>
-      <h3>環境設定</h3><div class="settings-row"><label for="quality">描画品質</label><select id="quality"><option value="auto">自動</option><option value="low">省電力</option><option value="high">高画質</option></select></div><div class="settings-row"><label for="volume">環境音の音量</label><input id="volume" type="range" min="0" max="0.7" step="0.01" value="0.42"></div><div class="settings-row"><span>音声確認</span><button id="audio-test" class="secondary-button">確認音を鳴らす</button></div><div class="settings-row"><label for="reduce-motion">動きを抑える</label><input id="reduce-motion" type="checkbox"></div><p class="fine-print">音はボタンを押したときだけ再生。タブを離れると描画・定期取得・音を休止します。省電力は30fpsを上限に描画します。</p>
-      <h3>キーボード操作</h3><div class="shortcuts"><span><kbd>1</kbd>〜<kbd>4</kbd> 次元を選択</span><span><kbd>Z</kbd> 没入モード</span><span><kbd>M</kbd> 環境音</span><span><kbd>F</kbd> 全画面</span><span><kbd>Space</kbd> 一時停止</span><span><kbd>Esc</kbd> 戻る</span></div>
-      <h3>データ出典</h3><ul class="source-list"><li><a href="https://mempool.space/docs/api" target="_blank" rel="noopener noreferrer">mempool.space ↗</a><span>ブロック、未承認取引、手数料、難易度、BTC/JPY。各ノードの観測値です。</span></li><li><a href="https://docs.cdp.coinbase.com/exchange/introduction/welcome" target="_blank" rel="noopener noreferrer">Coinbase Exchange ↗</a><span>BTC / ETH / SOL のUSD市場価格、24時間変化率、過去のローソク足。</span></li><li><a href="https://github.com/bitcoin/bitcoin" target="_blank" rel="noopener noreferrer">Bitcoin Core ↗</a><span>ブロック補助金・半減期・Genesis・SegWitの記録。</span></li></ul><p>価格とネットワークは原則60秒ごとに更新。ブロックはWebSocketでも受信します。取得できない数値は「—」、古い値は「前回値」または「*」と表示。星・ワームホール・色は映像演出です。半減期の日数や手数料は推定です。</p><div class="notice">ウォレット接続、秘密鍵、送金は不要です。設定と訪問記録をこのブラウザに保存します。価格などの取得時には、各データ提供元への通信が発生します。</div><p class="fine-print" id="graphics-note"></p><a class="repository-link" href="https://github.com/pythonDDD/dimension" target="_blank" rel="noopener noreferrer">OPEN THE SOURCE / GitHub ↗</a>
-    </section>
-  </div>
-</dialog>
-<div id="toast" role="status" hidden></div>
-<noscript><div class="noscript">DIMENSIONの宇宙を動かすには、JavaScriptを有効にしてください。</div></noscript>
+<button id="zen-exit" class="zen-exit" hidden>眺めるモードを終了 <span>Esc</span></button>
+<div id="toast" class="toast" role="status"></div>
+<noscript><p class="noscript">JavaScriptを有効にすると、宇宙・音楽・コンバーター・ゲームを利用できます。</p></noscript>
 </body>
 </html>

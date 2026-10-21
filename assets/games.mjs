@@ -1,44 +1,35 @@
-// Pure game rules. All points, channels and transactions in games are local simulations.
+// All game scores and satoshi tiles are local, fictional points.
 export const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 export function random(seed){let value=seed>>>0;return()=>{value+=0x6D2B79F5;let t=value;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
-export function newFlight(seed=1){return{rng:random(seed),time:0,spawn:.15,objects:[],x:0,y:0,vx:0,vy:0,score:0,combo:0,hearts:3,invulnerable:0,ended:false,events:[],serial:0};}
-export function stepFlight(state,dt,target,aspect=1){
-  if(state.ended)return state;dt=clamp(dt,0,.05);state.events=[];state.time+=dt;state.spawn-=dt;state.invulnerable=Math.max(0,state.invulnerable-dt);
-  const spring=14,damping=Math.exp(-7*dt);
-  state.vx=(state.vx+(clamp(target.x,-1,1)-state.x)*spring*dt)*damping;state.vy=(state.vy+(clamp(target.y,-1,1)-state.y)*spring*dt)*damping;
-  state.x=clamp(state.x+state.vx*dt*5,-1,1);state.y=clamp(state.y+state.vy*dt*5,-1,1);
-  if(state.spawn<=0){state.objects.push({id:state.serial++,x:state.rng()*1.8-.9,y:state.rng()*1.6-.8,z:1,kind:state.rng()<.72?'sat':'rock'});state.spawn=.58-state.time*.003;}
-  for(const o of state.objects){const previous=o.z;o.z-=dt*(.25+state.time*.0025);if(previous>0&&o.z<=0){
-    const hit=Math.hypot((o.x-state.x)*Math.max(.5,aspect),o.y-state.y)<(o.kind==='sat'?.28:.25);
-    if(hit&&o.kind==='sat'){state.combo++;state.score+=100+Math.min(10,state.combo)*20;state.events.push('collect');}
-    else if(hit&&!state.invulnerable){state.hearts--;state.combo=0;state.invulnerable=1.2;state.events.push('hit');}
-    else if(o.kind==='sat')state.combo=0;
-  }}
-  state.objects=state.objects.filter(o=>o.z>-.2);state.ended=state.hearts<=0||state.time>=60;return state;
-}
-
-export function routePuzzle(seed=1){
-  const rng=random(seed),nodes=Array.from({length:9},(_,i)=>({id:i,x:14+(i%3)*36,y:15+Math.floor(i/3)*35}));
-  const edges=[];const add=(a,b,safe=false)=>{if(edges.some(e=>e.a===a&&e.b===b||e.a===b&&e.b===a))return;edges.push({a,b,fee:1+Math.floor(rng()*9),capacity:safe?80:20+Math.floor(rng()*8)*10});};
-  for(let i=0;i<9;i++){if(i%3<2)add(i,i+1);if(i<6)add(i,i+3);}
-  // Always provide a usable route; remaining links may be capacity constrained.
-  const path=[0,1,4,7,8];for(let i=1;i<path.length;i++){const e=edges.find(e=>e.a===path[i-1]&&e.b===path[i]||e.b===path[i-1]&&e.a===path[i]);e.capacity=80;}
-  add(0,4);add(4,8);return{nodes,edges,amount:50,start:0,end:8};
-}
-export function routeCost(puzzle,path){
-  if(!Array.isArray(path)||path[0]!==puzzle.start||new Set(path).size!==path.length)return Infinity;
-  let total=0;for(let i=1;i<path.length;i++){const e=puzzle.edges.find(e=>e.a===path[i-1]&&e.b===path[i]||e.b===path[i-1]&&e.a===path[i]);if(!e||e.capacity<puzzle.amount)return Infinity;total+=e.fee;}return total;
-}
-export function bestRoute(puzzle){
-  let best={cost:Infinity,path:[]};const visit=path=>{const cost=routeCost(puzzle,path);if(cost>=best.cost)return;if(path.at(-1)===puzzle.end){best={cost,path};return;}for(const n of puzzle.nodes)if(!path.includes(n.id)&&Number.isFinite(routeCost(puzzle,[...path,n.id])))visit([...path,n.id]);};visit([puzzle.start]);return best;
-}
-export function blockPuzzle(seed=1){const rng=random(seed);return{capacity:100,transactions:Array.from({length:12},(_,id)=>{const size=9+Math.floor(rng()*24);return{id,size,fee:Math.round((80+rng()*500)*size/100)*10};})};}
-export function blockTotals(puzzle,selected){const unique=new Set(selected);return puzzle.transactions.reduce((acc,tx)=>unique.has(tx.id)?{size:acc.size+tx.size,fee:acc.fee+tx.fee}:acc,{size:0,fee:0});}
-export function bestBlock(puzzle){
-  const dp=Array.from({length:puzzle.capacity+1},()=>({fee:0,ids:[]}));
-  for(const tx of puzzle.transactions)for(let size=puzzle.capacity;size>=tx.size;size--){const candidate=dp[size-tx.size].fee+tx.fee;if(candidate>dp[size].fee)dp[size]={fee:candidate,ids:[...dp[size-tx.size].ids,tx.id]};}
-  return dp[puzzle.capacity];
-}
 export function newEcho(seed=1){return{rng:random(seed),sequence:[],position:0,round:0,phase:'ready',score:0};}
 export function nextEcho(state){state.sequence.push(Math.floor(state.rng()*4));state.position=0;state.round++;state.phase='listen';return [...state.sequence];}
 export function echoInput(state,pad){if(state.phase!=='input')return'ignored';if(state.sequence[state.position]!==pad){state.phase='over';return'wrong';}state.position++;if(state.position===state.sequence.length){state.score+=state.round*100;state.phase='complete';return'complete';}return'correct';}
+
+export function mergeLine(line){const compact=line.filter(Boolean),result=[],merged=[];let score=0;for(let i=0;i<compact.length;i++){if(compact[i]===compact[i+1]){const value=compact[i]*2;result.push(value);merged.push(result.length-1);score+=value;i++;}else result.push(compact[i]);}while(result.length<4)result.push(0);return{line:result,score,merged};}
+export function moveTiles(board,direction){if(!['left','right','up','down'].includes(direction))throw Error('Invalid direction');const result=[...board];let score=0;const merged=[];for(let n=0;n<4;n++){let indices=Array.from({length:4},(_,i)=>direction==='left'||direction==='right'?n*4+i:i*4+n);if(direction==='right'||direction==='down')indices.reverse();const next=mergeLine(indices.map(i=>board[i]));next.line.forEach((v,j)=>result[indices[j]]=v);next.merged.forEach(i=>merged.push(indices[i]));score+=next.score;}return{board:result,score,merged,changed:board.some((v,i)=>v!==result[i])};}
+export function addTile(board,rng){const empty=board.map((v,i)=>v?null:i).filter(v=>v!==null);if(!empty.length)return-1;const i=empty[Math.floor(rng()*empty.length)];board[i]=rng()<.9?2:4;return i;}
+export function canMerge(board){return ['left','right','up','down'].some(d=>moveTiles(board,d).changed);}
+export function newMerge(seed=1){const rng=random(seed),board=Array(16).fill(0);addTile(board,rng);addTile(board,rng);return{rng,board,score:0,undo:null,over:false};}
+export function playMerge(state,direction){const next=moveTiles(state.board,direction);if(!next.changed)return null;state.undo={board:[...state.board],score:state.score};state.board=next.board;state.score+=next.score;const added=addTile(state.board,state.rng);state.over=!canMerge(state.board);return{...next,added};}
+
+export const MATCH_SIZE=7,MATCH_TYPES=5;
+export function findMatches(board){const hits=new Set();for(let n=0;n<7;n++)for(const vertical of [false,true]){const at=i=>vertical?i*7+n:n*7+i;let start=0;for(let i=1;i<=7;i++)if(i===7||board[at(i)]!==board[at(start)]||board[at(start)]<0){if(i-start>=3&&board[at(start)]>=0)for(let j=start;j<i;j++)hits.add(at(j));start=i;}}return [...hits];}
+export function adjacent(a,b){return Number.isInteger(a)&&Number.isInteger(b)&&a>=0&&b>=0&&a<49&&b<49&&(Math.abs(a-b)===7||Math.floor(a/7)===Math.floor(b/7)&&Math.abs(a-b)===1);}
+export function matchMoves(board){const pairs=[];for(let a=0;a<49;a++)for(const b of [a+1,a+7]){if(!adjacent(a,b))continue;const copy=[...board];[copy[a],copy[b]]=[copy[b],copy[a]];if(findMatches(copy).length)pairs.push([a,b]);}return pairs;}
+export function freshMatch(rng){for(let attempt=0;attempt<100;attempt++){const board=[];for(let i=0;i<49;i++){const options=[0,1,2,3,4].filter(v=>!(i%7>=2&&board[i-1]===v&&board[i-2]===v)&&!(i>=14&&board[i-7]===v&&board[i-14]===v));board.push(options[Math.floor(rng()*options.length)]);}if(matchMoves(board).length)return board;}throw Error('Unable to create playable board');}
+export function newMatch(seed=1){const rng=random(seed);return{rng,board:freshMatch(rng),score:0,moves:20,over:false};}
+export function playMatch(state,a,b){if(state.over||!adjacent(a,b))return null;const board=[...state.board];[board[a],board[b]]=[board[b],board[a]];let matched=findMatches(board);if(!matched.length)return null;state.moves--;const frames=[];let chain=0;while(matched.length&&chain<50){chain++;const points=matched.length*10*chain;state.score+=points;frames.push({board:[...board],matched:[...matched],chain,points});for(const i of matched)board[i]=-1;for(let col=0;col<7;col++){const values=[];for(let row=6;row>=0;row--)if(board[row*7+col]>=0)values.push(board[row*7+col]);for(let row=6;row>=0;row--)board[row*7+col]=values[6-row]??Math.floor(state.rng()*5);}matched=findMatches(board);}
+ const shuffled=matched.length>0||!matchMoves(board).length;state.board=shuffled?freshMatch(state.rng):board;state.over=state.moves===0;return{frames,shuffled,chain};}
+
+export function newBreaker(){const state={level:1,score:0,lives:3,paddle:.5,ball:{x:.5,y:.85,vx:.28,vy:-.49},bricks:[],ready:true,over:false,combo:0,events:[],wide:0};breakerLevel(state);return state;}
+export function breakerLevel(state){state.bricks=Array.from({length:32},(_,i)=>({x:.06+(i%8)*.111,y:.12+Math.floor(i/8)*.082,w:.099,h:.058,hp:(state.level>1&&i%3===0)?2:1,id:i}));state.ready=true;state.ball={x:state.paddle,y:.85,vx:(state.level%2?.28:-.28),vy:-.49-Math.min(state.level,7)*.015};state.combo=0;}
+export function launchBreaker(state){if(!state.over)state.ready=false;}
+export function stepBreaker(state,dt,target){state.events=[];if(state.over)return;dt=clamp(dt,0,.05);state.wide=Math.max(0,state.wide-dt);const half=state.wide>0?.115:.082;state.paddle=clamp(target,half+.01,1-half-.01);if(state.ready){state.ball.x=state.paddle;return;}
+ const b=state.ball;const steps=Math.ceil(dt/.006);for(let i=0;i<steps;i++){const d=dt/steps,oldY=b.y; b.x+=b.vx*d;b.y+=b.vy*d;const r=.012;
+ if(b.x<r||b.x>1-r){b.x=clamp(b.x,r,1-r);b.vx*=-1;}if(b.y<r){b.y=r;b.vy=Math.abs(b.vy);}
+ if(b.vy>0&&oldY<=.895-r&&b.y>=.895-r&&Math.abs(b.x-state.paddle)<half+r){b.y=.895-r;const hit=(b.x-state.paddle)/half;const speed=Math.min(.95,.57+state.level*.035+state.combo*.004);b.vx=hit*speed*.83;b.vy=-Math.sqrt(speed*speed-b.vx*b.vx);state.combo=0;state.events.push({kind:'paddle',x:b.x,y:b.y});}
+ for(const brick of state.bricks){if(brick.hp<=0||b.x+r<brick.x||b.x-r>brick.x+brick.w||b.y+r<brick.y||b.y-r>brick.y+brick.h)continue;brick.hp--;state.combo++;state.score+=10+Math.min(10,state.combo)*5;if(oldY+r<=brick.y){b.y=brick.y-r;b.vy=-Math.abs(b.vy);}else if(oldY-r>=brick.y+brick.h){b.y=brick.y+brick.h+r;b.vy=Math.abs(b.vy);}else if(b.x<brick.x+brick.w/2){b.x=brick.x-r;b.vx=-Math.abs(b.vx);}else{b.x=brick.x+brick.w+r;b.vx=Math.abs(b.vx);}state.events.push({kind:'brick',x:b.x,y:b.y,color:brick.id%4});if(state.combo%6===0)state.wide=9;break;}
+ if(b.y>1.04){state.lives--;state.combo=0;state.ready=true;state.events.push({kind:'lost'});if(state.lives<=0)state.over=true;else state.ball={x:state.paddle,y:.85,vx:.28,vy:-.53};break;}
+ if(state.bricks.every(brick=>brick.hp===0)){state.score+=200;state.level++;breakerLevel(state);state.events.push({kind:'level'});break;}
+ }
+}

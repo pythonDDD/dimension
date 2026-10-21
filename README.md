@@ -1,39 +1,41 @@
-# DIMENSION — Bitcoin Interactive Space
+# DIMENSION
 
-An interactive, browser-native Bitcoin cockpit. [Open DIMENSION](https://pythonddd.github.io/dimension/) · [日本語](./README.ja.md)
+[Open DIMENSION](https://pythonddd.github.io/dimension/) · [日本語](README.ja.md)
 
-## Four workspaces, four games
+Bitcoin, ambient music and four games on one continuous page. No navigation tabs, drawers or game dialogs.
 
-| World | Direct interaction | Local arcade game |
-| --- | --- | --- |
-| Wormhole | Inertial drag / keyboard steering, gravity lens, drift, boost, simulated distance | **SATS SURFER** — 60-second flight; collect rings, avoid obstacles, build combos |
-| Satoshi's Galaxy | Select actual recent Bitcoin blocks; inspect miner, transactions, weight and time; open the explorer | **LIGHTNING LINK** — five capacity-constrained routing puzzles, scored against minimum cost |
-| Tesseract | Rotate XW / YW / ZW planes, change 4D projection distance, toggle automatic rotation | **BLOCK BUILDER** — choose transactions under a capacity budget; three rounds scored against the optimum |
-| 2017 Time Deck | Scrub and replay 365 historical daily closes; date controls the sky, playback price controls notes | **HASH ECHO** — reproduce light / sound sequences over 12 rounds; works without sound |
+![DIMENSION v4 preview](docs/dimension-v4-20261021.jpg)
 
-Games are local simulations, not actual mining, payments, Lightning channels or rewards. Best scores are saved on this device. Flight supports pointer/touch dragging and arrow/WASD keys. Hash Echo also supports keys 1–4. Timed games pause when the tab loses focus; returning requires an explicit resume.
+## What is on the page
 
-The center is an interactive space rather than a promotional hero. Controls and data collapse for viewing; Z hides the HUD, 1–4 switches worlds, M toggles audio. Mobile has a tools menu for data panels and volume settings.
+- **Satoshi converter:** SAT, BTC, JPY, USD, STX, GMT, SOL and ETH in either direction. Starts at 1 sat; six outputs are visible together. Presets, copy, manual refresh and explicit stale/unavailable states.
+- **Ambient radio:** original eight-bar compositions with soft electric-piano harmonics, bass and stereo room reverb. **Deep Orbit** is a slow ambient arrangement at 56 BPM; **Blue Hour** uses jazz voicings and swung phrases at 68 BPM. Playback starts with a user click. The persistent header contains music selection, play/stop and volume.
+- **Bitcoin in orbit:** drifting WebGL/Canvas space, warp, motion pause, PNG capture and an immersive viewing mode. Actual new blocks trigger a visual pulse.
+- **Live Bitcoin:** recent unconfirmed transactions, six latest blocks, elapsed block time, fee estimates and a fee budget in sats/JPY.
+- **Hash canvas:** deterministic geometry from a selected block's hash or the SHA-256 of text typed locally. Direct PNG export. Text is never sent to an API.
 
-## Audio and rendering
+## Arcade
 
-Use **音を開始** to create/resume Web Audio directly from a user gesture. The interface follows the actual context state, exposes volume and a confirmation tone, and offers resume after interruptions. Four chord palettes, stereo pads, filtered wind, delayed notes and game effects are synthesized locally. Hash Echo ducks the background and suspends the ambient arpeggio while it is open. No audio files or external graphics dependencies are loaded.
+| Game | Interaction |
+| --- | --- |
+| Hash Echo | The retained 12-round light/sound memory game. Click pads or use 1–4. Works with sound off. |
+| Sats Merge | Slide matching tiles into bigger values. Swipe, arrow keys or on-screen directions. Includes one-move undo. |
+| Block Breaker | Paddle-and-ball arcade with three lives, successive levels, two-hit bricks, combos and a temporary wider paddle. Drag or use left/right keys; Space launches/pauses. |
+| Chain Match | Swap adjacent crypto symbols to match three or more. Twenty successful moves, scored cascades, hints and automatic reshuffling when needed. |
 
-Native WebGL and Canvas provide depth layers, drifting stars and inertial camera movement. Reduced motion, adaptive resolution, fullscreen, PNG capture and automatic tours remain available. Background graphics pause while the arcade is open. Hidden tabs suspend graphics, audio and network polling. WebGL failure falls back to Canvas.
+All points and tiles are fictional game scores. Best scores are stored locally; Hash Echo's existing v3 best score is retained. Timed games pause on focus loss, when hidden, or when scrolled out of view. Resume is explicit. Hash Echo ducks the music during a round; other games add no sound effects.
 
-## Data and other tools
+The previous three games, Crypto Lab, 2017 archive/replay, scene tabs and modal navigation have been removed.
 
-Retains live blocks, mempool, fee estimates, halving and subsidy calculations, BTC/USD charts, ETH/SOL observations, BTC/sats/JPY/USD conversion, a bounded actual SHA-256 learning puzzle, transaction text inspection and achievements.
+## Data and runtime
 
-[mempool.space](https://mempool.space/docs/api) provides network observations and JPY quotes. [Coinbase Exchange](https://docs.cdp.coinbase.com/exchange/introduction/welcome) provides USD quotes and candles. [Bitcoin Core](https://github.com/bitcoin/bitcoin) supplies protocol rules. The bundled `data/history-2017.json` contains all 365 UTC daily candles with source and retrieval metadata. Live candles may include an unfinished candle.
+[Coinbase Exchange Rates](https://docs.cdp.coinbase.com/coinbase-app/track-apis/exchange-rates) supplies all conversion quotes in one unauthenticated request with BTC as base. Rates are reference quotes, not executable trade prices. [Coinbase Exchange](https://docs.cdp.coinbase.com/exchange/introduction/welcome) supplies the BTC/USD 24-hour snapshot. [mempool.space](https://mempool.space/docs/api) supplies blocks, transaction samples and recommended fees.
 
-Polling normally runs every 60 seconds; blocks also arrive through WebSocket. Failed or old observations are labeled; unavailable numbers are not invented. A node's mempool is not the whole network. Block orbital positions, flight distance and cosmic visuals are simulations. Countdown days assume ten minutes per block; fees are estimates. Scheduled supply includes the genesis subsidy and is not circulating supply.
+Polling runs every 60 seconds; blocks and mempool observations also use WebSocket. Failed, cached or older-than-150-second records are labeled. Missing currency quotes show “—”, never zero. Cached rates are retained for at most 24 hours. Data is suspended when the document is hidden. A node's mempool is only its own view; fees and block intervals are estimates. A block timestamp can be ahead of the device clock, which the UI labels explicitly.
 
-OP_RETURN is rendered as inert text. P2PKH text recognition is heuristic; chained inscriptions and arbitrary HTML/scripts are not executed. The SHA-256 puzzle is an educational exercise, not Bitcoin mining.
+Buildless HTML/CSS/ES modules, no runtime packages, audio downloads, API keys, secrets or wallet connection. SHA-256 uses Web Crypto with a tested portable fallback. Adaptive graphics, reduced motion, off-screen rendering suspension and Canvas fallback are supported.
 
-## Development and deployment
-
-Buildless HTML/CSS/ES modules, no runtime packages, keys, wallet connection or Secrets. GitHub Pages serves **main / (root)** at https://pythonddd.github.io/dimension/ . For local use, serve over HTTPS or localhost rather than `file://`.
+## Development
 
 Node >=20:
 
@@ -43,10 +45,12 @@ npm run check
 npm run build
 ```
 
-`dist/` is an optional static bundle. `.github/workflows/verify.yml` runs tests, syntax / reference checks and the build. Original site history remains at `79a40d724154c10a30081a90d8201696cf9ce6ae` and `archive/original-2026-10-20`.
+GitHub Pages serves **main / (root)**. `dist/` is an optional static build. The verification workflow runs all three commands on Node 22. Original history remains in Git and `archive/original-2026-10-20`.
 
-## Verification limits
+## Verification
 
-28 automated tests cover protocol/data rules, game collision boundaries, route solvability, block optimality, memory-game phases and audio lifecycle. Mocked DOM integration exercised all four workspaces, complete game rounds, pause/resume/restart, saved scores, existing tools and audio controls. Actual shaders compiled and rendered using EGL. An offline Web Audio implementation produced non-silent stereo PCM for all four scene graphs and verified muting; its compressor is a passthrough.
+30 automated tests cover conversions and missing/stale quotes, SHA-256 against Node's reference implementation, all four game engines, collision separation, complete memory/match sessions and audio lifecycle/composition. Static checks verify module/element references and the absence of tabs/dialogs.
 
-**Real browser layout, mobile GPU behavior, hardware playback and audible sound quality have not been verified in this environment.** Offline audio and DOM checks do not verify a particular browser's autoplay behavior.
+Chrome preview checks exercised actual rate retrieval, reverse conversion, music start/stop, Hash canvas, Hash Echo scoring/pause, tile movement, match cascades, and breaker start/pause. Desktop and 375 CSS-pixel content widths were inspected; the mobile-width document has no horizontal overflow. The preview browser used the Canvas graphics fallback.
+
+Offline Web Audio rendering produced non-silent stereo output over the complete eight-bar arrangements (about 75 seconds ambient / 34 seconds jazz including tails), with peak amplitude below 0.26 at the default volume. This verifies signal output, **not subjective listening quality or hardware playback**. Mobile touch hardware and mobile GPU performance remain unverified.

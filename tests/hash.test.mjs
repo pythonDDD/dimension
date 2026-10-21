@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';import {sha256Portable,sha256} from '../assets/hash.mjs';
+test('Hash canvas matches SHA-256 across empty, Unicode, padding boundaries and long inputs',async()=>{for(const value of ['', 'abc','Bitcoin in orbit','ビットコイン ₿🚀',...'x'.repeat(140).split('').map((_,i)=>'a'.repeat(i)), 'λ'.repeat(160)]){const expected=createHash('sha256').update(value).digest('hex');assert.equal(sha256Portable(value),expected);assert.equal(await sha256(value),expected);}});

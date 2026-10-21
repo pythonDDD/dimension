@@ -1,30 +1,8 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import {AmbientAudio} from '../assets/audio.mjs';
-class Param {constructor(value=0){this.value=value;}setTargetAtTime(v){this.value=v;}setValueAtTime(v){this.value=v;}linearRampToValueAtTime(v){this.value=v;}exponentialRampToValueAtTime(v){this.value=v;}}
-class Node {constructor(){for(const key of ['gain','frequency','detune','Q','pan','delayTime','threshold','knee','ratio'])this[key]=new Param();this.connections=[];}connect(n){this.connections.push(n);return n;}disconnect(){}start(){this.started=true;}stop(){this.stopped=true;}getByteTimeDomainData(a){a.fill(128);}}
-class Context {constructor(){this.currentTime=0;this.sampleRate=8000;this.state='suspended';this.destination=new Node();this.nodes=[];}create(){const n=new Node();this.nodes.push(n);return n;}createGain(){return this.create();}createDynamicsCompressor(){return this.create();}createDelay(){return this.create();}createAnalyser(){return this.create();}createOscillator(){return this.create();}createBiquadFilter(){return this.create();}createStereoPanner(){return this.create();}createBufferSource(){return this.create();}createBuffer(c,n){const data=new Float32Array(n);return{getChannelData:()=>data};}async resume(){if(this.fail)throw Error('blocked');if(!this.blocked)this.state='running';this.onstatechange?.();}async suspend(){this.state='suspended';this.onstatechange?.();}async close(){this.state='closed';}}
-
-test('Audio starts only on request; mute, visibility and scene changes keep actual state consistent',async()=>{
-  const original=globalThis.AudioContext;globalThis.AudioContext=Context;const sound=new AmbientAudio();
-  try{assert.equal(sound.ctx,null);assert.equal(sound.playing,false);assert.equal(await sound.toggle(),true);assert.equal(sound.playing,true);assert.equal(sound.voices.length,4);assert(sound.voices.every(v=>v.oscillator.frequency.value>=110));assert.equal(sound.master.gain.value,.42);sound.setVolume(.3);assert.equal(sound.master.gain.value,.3);
-    sound.setScene(2);assert.equal(sound.voices[0].oscillator.frequency.value,164.81);await sound.visibility(true);assert.equal(sound.playing,false);assert.equal(sound.ctx.state,'suspended');assert.equal(sound.master.gain.value,0);await sound.visibility(false);assert.equal(sound.playing,true);
-    sound.ctx.state='interrupted';assert.equal(sound.playing,false);await sound.start();assert.equal(sound.playing,true);assert.equal(await sound.toggle(),false);assert.equal(sound.playing,false);assert.equal(sound.master.gain.value,0);
-  }finally{sound.destroy();globalThis.AudioContext=original;}
-});
-test('A rejected or still-suspended resume never reports audio ON',async()=>{
-  const original=globalThis.AudioContext;globalThis.AudioContext=Context;const sound=new AmbientAudio();
-  try{sound.init();sound.ctx.fail=true;await assert.rejects(sound.start(),/blocked/);assert.equal(sound.enabled,false);assert.equal(sound.playing,false);assert.equal(sound.master.gain.value,0);sound.ctx.fail=false;sound.ctx.blocked=true;await assert.rejects(sound.start(),/休止中/);assert.equal(sound.enabled,false);assert.equal(sound.playing,false);
-  }finally{sound.destroy();globalThis.AudioContext=original;}
-});
-test('Effect tones are gated while stopped and support all four memory-game notes',async()=>{
-  const original=globalThis.AudioContext;globalThis.AudioContext=Context;const sound=new AmbientAudio();
-  try{sound.effect('pad',0);assert.equal(sound.ctx,null);await sound.start();const count=sound.ctx.nodes.length;for(let i=0;i<4;i++)sound.effect('pad',i);assert(sound.ctx.nodes.length>count);sound.stop();const stopped=sound.ctx.nodes.length;sound.effect('collect');assert.equal(sound.ctx.nodes.length,stopped);
-  }finally{sound.destroy();globalThis.AudioContext=original;}
-});
-
-test('An indefinitely pending browser resume times out instead of trapping the sound control',async t=>{
-  t.mock.timers.enable({apis:['setTimeout']});const original=globalThis.AudioContext;globalThis.AudioContext=Context;const sound=new AmbientAudio();
-  try{sound.init();sound.ctx.resume=()=>new Promise(()=>{});const pending=assert.rejects(sound.start(),/音声を開始できません/);t.mock.timers.tick(4001);await pending;assert.equal(sound.enabled,false);assert.equal(sound.playing,false);assert.equal(sound.master.gain.value,0);}
-  finally{sound.destroy();globalThis.AudioContext=original;t.mock.timers.reset();}
-});
+import test from 'node:test';import assert from 'node:assert/strict';import {AmbientAudio,scoreBar,HARMONY} from '../assets/audio.mjs';
+class Param{constructor(){this.value=0;}setValueAtTime(v){this.value=v;}linearRampToValueAtTime(v){this.value=v;}exponentialRampToValueAtTime(v){this.value=v;}setTargetAtTime(v){this.value=v;}}
+class Node{constructor(){for(const key of ['gain','frequency','pan','threshold','knee','ratio','attack','release'])this[key]=new Param();}connect(){}disconnect(){}start(){}stop(){}}
+class Context{constructor(){this.currentTime=0;this.sampleRate=100;this.state='suspended';this.destination=new Node();this.nodes=[];}create(){const n=new Node();this.nodes.push(n);return n;}createGain(){return this.create();}createDynamicsCompressor(){return this.create();}createConvolver(){return this.create();}createOscillator(){return this.create();}createBiquadFilter(){return this.create();}createStereoPanner(){return this.create();}createBuffer(c,n){return{getChannelData:()=>new Float32Array(n)};}async resume(){if(this.fail)throw Error('blocked');if(!this.blocked)this.state='running';this.onstatechange?.();}async suspend(){this.state='suspended';}async close(){this.state='closed';}}
+test('Compositions have changing harmony, bounded notes and separate slow and jazzy arrangements',()=>{assert(new Set(HARMONY.map(c=>c.name)).size>=5);for(const mode of ['ambient','jazz'])for(let bar=0;bar<16;bar++){const events=scoreBar(mode,bar);assert(events.some(e=>e.instrument==='bass'));assert(events.filter(e=>e.instrument==='keys').length>=5);assert(events.every(e=>e.midi>=33&&e.midi<=78&&e.velocity<=.14&&e.length>0));assert(events.every((e,i)=>i===0||e.beat>=events[i-1].beat));}assert.notDeepEqual(scoreBar('ambient',0),scoreBar('jazz',0));});
+test('Music starts on request, respects mute and suspends/resumes with visibility',async()=>{const old=globalThis.AudioContext;globalThis.AudioContext=Context;const a=new AmbientAudio();try{assert.equal(a.ctx,null);await a.start();assert(a.playing);assert(a.ctx.nodes.length>0);a.setVolume(.3);assert.equal(a.master.gain.value,.3);a.setGame('echo');assert.equal(a.music.gain.value,.18);await a.visibility(true);assert(!a.playing);await a.visibility(false);assert(a.playing);a.stop();assert(!a.playing);assert.equal(a.master.gain.value,0);}finally{a.destroy();globalThis.AudioContext=old;}});
+test('Failed and still-suspended audio resumes are never reported as playing',async()=>{const old=globalThis.AudioContext;globalThis.AudioContext=Context;const a=new AmbientAudio();try{a.init();a.ctx.fail=true;await assert.rejects(a.start(),/blocked/);assert(!a.playing);a.ctx.fail=false;a.ctx.blocked=true;await assert.rejects(a.start(),/休止中/);assert(!a.enabled);}finally{a.destroy();globalThis.AudioContext=old;}});
+test('Pending browser audio permission is bounded instead of locking the button',async t=>{t.mock.timers.enable({apis:['setTimeout']});const old=globalThis.AudioContext;globalThis.AudioContext=Context;const a=new AmbientAudio();try{a.init();a.ctx.resume=()=>new Promise(()=>{});const pending=assert.rejects(a.start(),/音声を開始できません/);t.mock.timers.tick(4001);await pending;assert(!a.enabled);}finally{a.destroy();globalThis.AudioContext=old;t.mock.timers.reset();}});
