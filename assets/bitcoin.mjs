@@ -108,15 +108,16 @@ export function mergeBlocks(current, incoming) {
   return [...map.values()].sort((a, b) => b.height - a.height).slice(0, 8);
 }
 
-export function tesseract(time) {
+export function tesseract(time, options = {}) {
+  const { xw=time*.23, yw=0, zw=time*.17, yz=time*.13, distance=3 } = options;
   const vertices = [];
   for (let i = 0; i < 16; i++) {
     let v = [0, 1, 2, 3].map(bit => (i >> bit & 1) ? 1 : -1);
-    for (const [a, b, theta] of [[0, 3, time * .23], [1, 2, time * .13], [2, 3, time * .17]]) {
+    for (const [a, b, theta] of [[0, 3, xw], [1, 3, yw], [1, 2, yz], [2, 3, zw]]) {
       const c = Math.cos(theta), s = Math.sin(theta), x = v[a];
       v[a] = x * c - v[b] * s; v[b] = x * s + v[b] * c;
     }
-    const p = 1 / (3 - v[3]);
+    const p = 1 / (clamp(distance,2.5,5) - v[3]);
     vertices.push([v[0] * p, v[1] * p, v[2] * p]);
   }
   const edges = [];

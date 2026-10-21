@@ -1,4 +1,4 @@
-import { finite, mergeBlocks, normalizeCandles, isHex64 } from './bitcoin.mjs';
+import { finite, mergeBlocks, normalizeCandles, isHex64 } from './bitcoin.mjs?v=3.0.0';
 const MEMPOOL='https://mempool.space/api';
 const EXCHANGE='https://api.exchange.coinbase.com/products';
 export const STALE_AFTER=150_000;

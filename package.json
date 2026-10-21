@@ -1,11 +1,11 @@
 {
   "name": "dimension-bitcoin-observatory",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check assets/app.mjs && node --check assets/cosmos.mjs && node --check assets/data.mjs && node --check assets/audio.mjs && node --check assets/miner-worker.mjs && node scripts/check.mjs",
+    "check": "node --check assets/app.mjs && node --check assets/cosmos.mjs && node --check assets/data.mjs && node --check assets/audio.mjs && node --check assets/miner-worker.mjs && node --check assets/experience.mjs && node --check assets/games.mjs && node --check assets/arcade.mjs && node scripts/check.mjs",
     "build": "node scripts/build.mjs"
   },
   "engines": { "node": ">=20" }

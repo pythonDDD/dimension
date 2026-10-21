@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 const html=await readFile('index.html','utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(ids.length,new Set(ids).size,'HTML contains duplicate IDs');
-const js=await readFile('assets/app.mjs','utf8');
-for(const match of js.matchAll(/(?:\$|text)\('([^']+)'/g))assert(ids.includes(match[1]),`Missing element #${match[1]}`);
-for(const match of html.matchAll(/(?:src|href)="(assets\/[^"?#]+)"/g))await access(match[1]);
-for(const source of ['assets/app.mjs','assets/cosmos.mjs','assets/data.mjs']){
+const js=(await Promise.all(['app','experience','arcade'].map(name=>readFile(`assets/${name}.mjs`,'utf8')))).join('\n');
+for(const match of js.matchAll(/(?<![\w])(?:\$|text)\('([^']+)'(?=[,)])/g))assert(ids.includes(match[1]),`Missing element #${match[1]}`);
+for(const match of html.matchAll(/(?:src|href)="(assets\/[^"?#]+)(?:[?#][^"]*)?"/g))await access(match[1]);
+for(const source of ['assets/app.mjs','assets/cosmos.mjs','assets/data.mjs','assets/experience.mjs','assets/arcade.mjs']){
  const code=await readFile(source,'utf8');
- for(const match of code.matchAll(/from ['"]\.\/([^'"]+)['"]/g))await access(`assets/${match[1]}`);
+ for(const match of code.matchAll(/from ['"]\.\/([^'"]+)['"]/g))await access(`assets/${match[1].split(/[?#]/)[0]}`);
 }
 assert(!/\bon(?:click|load|error|input)=/i.test(html),'CSP-incompatible inline handler');
 assert(!/<script(?![^>]*src=)[^>]*>/i.test(html),'Unexpected inline script');

@@ -1,4 +1,4 @@
-import { clamp, tesseract } from './bitcoin.mjs';
+import { clamp, tesseract } from './bitcoin.mjs?v=3.0.0';
 export const VERTEX_SHADER = `attribute vec2 position;void main(){gl_Position=vec4(position,0.,1.);}`;
 export const FRAGMENT_SHADER = `
 precision highp float;
@@ -9,6 +9,8 @@ uniform float time;
 uniform float scene;
 uniform float pulse;
 uniform float warp;
+uniform float lens;
+uniform float epoch;
 #define PI 3.14159265
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
@@ -17,12 +19,12 @@ float glow(float d,float width){return exp(-abs(d)/width);}
 void main(){
  vec2 uv=gl_FragCoord.xy/resolution;
  float aspect=resolution.x/resolution.y;
- vec2 p=(uv-center)*vec2(aspect,1.)-pointer*.008;
+ vec2 p=(uv-center)*vec2(aspect,1.)/max(.5,lens)-pointer*.025;
  float t=time;
  float n=fbm(p*3.+vec2(t*.005,-t*.008));
  vec3 col=vec3(.019,.028,.047)+vec3(.055,.045,.09)*pow(n,3.);
  float stars=pow(noise(p*420.),70.);col+=stars*.8;
- float a=-.27;mat2 rot=mat2(cos(a),-sin(a),sin(a),cos(a));
+ float a=-.27+pointer.x*.055;mat2 rot=mat2(cos(a),-sin(a),sin(a),cos(a));
  vec2 q=rot*p;float r=length(q*vec2(.94,1.12));float ang=atan(q.y*1.12,q.x*.94);
  float radius=.235+sin(t*.07)*.002;
  if(scene<.5){
@@ -56,9 +58,9 @@ void main(){
   col+=vec3(.14,.2,.35)*glow(r-.29,.001)*.15;
   col+=vec3(.14,.3,.36)*glow(r-.32,.0006)*.12;
  }else{
-  float sun=length(p-vec2(0.,.045));
+  float sun=length(p-vec2(0.,.015+epoch*.13));
   float stripes=smoothstep(.24,.5,sin((p.y+.1)*260.));
-  vec3 sunColor=mix(vec3(.82,.18,.12),vec3(1.,.64,.27),clamp((p.y+.2)*3.,0.,1.));
+  vec3 sunColor=mix(vec3(.58,.15,.36),vec3(1.,.64,.27),clamp((p.y+.2)*3.+epoch*.3,0.,1.));
   col+=sunColor*(1.-smoothstep(.17,.174,sun))*(.35+.25*stripes);
   col+=vec3(.8,.3,.13)*exp(-sun*10.)*.18;
   float horizon=-.19;
@@ -82,6 +84,7 @@ export class Cosmos {
   constructor(canvas, overlay, onStatus = () => {}) {
     this.canvas=canvas;this.overlay=overlay;this.ctx=overlay.getContext('2d');this.onStatus=onStatus;
     this.scene=0;this.time=12;this.speed=.5;this.paused=false;this.reduced=false;this.quality='auto';this.low=false;this.hidden=false;this.pointer=[0,0];this.target=[0,0];this.warpUntil=0;this.pulse=0;this.last=0;this.frame=0;this.slowFrames=0;this.raf=0;this.blocks=[];
+    this.lens=1;this.epoch=0;this.drift=.7;this.pilot=[0,0];this.camera=[0,0];this.rotationClock=0;this.rotating=true;this.axes={xw:0,yw:0,zw:0};this.projection=3.5;
     this.stars=Array.from({length:1000},(_,i)=>({x:Math.random()*2-1,y:Math.random()*2-1,z:Math.random(),size:Math.random(),seed:Math.random()*Math.PI*2,i}));
     this.initGL();this.resize();this.loop=this.loop.bind(this);this.schedule();
     window.addEventListener('resize',()=>this.resize());
@@ -99,7 +102,7 @@ export class Cosmos {
       gl.deleteShader(v);gl.deleteShader(f);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
       gl.useProgram(program);const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
       const pos=gl.getAttribLocation(program,'position');gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
-      this.uniforms=Object.fromEntries(['resolution','center','pointer','time','scene','pulse','warp'].map(name=>[name,gl.getUniformLocation(program,name)]));this.gl=gl;this.onStatus('WEBGL / PROCEDURAL UNIVERSE');
+      this.uniforms=Object.fromEntries(['resolution','center','pointer','time','scene','pulse','warp','lens','epoch'].map(name=>[name,gl.getUniformLocation(program,name)]));this.gl=gl;this.onStatus('WEBGL / PROCEDURAL UNIVERSE');
     }catch{this.gl=null;this.canvas.style.opacity='0';this.onStatus('CANVAS / 省電力の星空');}
   }
   resize(){
@@ -108,7 +111,7 @@ export class Cosmos {
     const dpr=Math.min(devicePixelRatio||1,maxWidth/this.w,1.5);
     this.canvas.width=Math.round(this.w*dpr);this.canvas.height=Math.round(this.h*dpr);
     this.dpr=Math.min(devicePixelRatio||1,1.5);this.overlay.width=Math.round(this.w*this.dpr);this.overlay.height=Math.round(this.h*this.dpr);
-    this.center=this.w<=700?[.53,.49]:[.555,.57];this.cx=this.w*this.center[0];this.cy=this.h*(1-this.center[1]);
+    this.center=this.w<=700?[.5,.68]:[.60,.55];this.cx=this.w*this.center[0];this.cy=this.h*(1-this.center[1]);
     if(this.gl)this.gl.viewport(0,0,this.canvas.width,this.canvas.height);this.draw();
   }
   configure(options){Object.assign(this,options);if(options.quality){this.low=false;this.resize();}this.draw();this.schedule();}
@@ -125,35 +128,48 @@ export class Cosmos {
     if(this.quality==='auto'&&!this.low){this.slowFrames=raw>42?this.slowFrames+1:Math.max(0,this.slowFrames-1);if(this.slowFrames>70){this.low=true;this.resize();this.onStatus('WEBGL / AUTO ECO');}}
     const warp=this.warpUntil>now?Math.sin(Math.PI*(1-(this.warpUntil-now)/2300)):0;
     this.warpAmount=warp;this.time+=dt*(this.speed+warp*2.5);this.pulse=this.pulse>0?this.pulse+dt*.32:0;if(this.pulse>1.95)this.pulse=0;
-    this.pointer=this.pointer.map((v,i)=>v+(this.target[i]-v)*.025);this.draw();this.raf=requestAnimationFrame(this.loop);
+    this.pointer=this.pointer.map((v,i)=>v+(this.target[i]-v)*(1-Math.exp(-dt*1.8)));
+    this.camera=this.camera.map((v,i)=>v+(this.pilot[i]-v)*(1-Math.exp(-dt*1.2)));if(this.rotating)this.rotationClock+=dt*this.speed;this.draw();this.raf=requestAnimationFrame(this.loop);
   }
   draw(){
     if(!this.ctx)return;
     const {gl,uniforms:u}=this;
-    if(gl){gl.uniform2f(u.resolution,this.canvas.width,this.canvas.height);gl.uniform2f(u.center,...this.center);gl.uniform2f(u.pointer,...this.pointer);gl.uniform1f(u.time,this.time);gl.uniform1f(u.scene,this.scene);gl.uniform1f(u.pulse,this.pulse);gl.uniform1f(u.warp,this.warpAmount||0);gl.drawArrays(gl.TRIANGLES,0,6);}
+    const floating=this.reduced?0:this.drift;const cam=[this.pointer[0]*.35+this.camera[0]*2.5+Math.sin(this.time*.19)*floating*.6,this.pointer[1]*.25+this.camera[1]*2+Math.cos(this.time*.24)*floating*.38];
+    if(gl){gl.uniform2f(u.resolution,this.canvas.width,this.canvas.height);gl.uniform2f(u.center,...this.center);gl.uniform2f(u.pointer,...cam);gl.uniform1f(u.lens,this.lens);gl.uniform1f(u.epoch,this.epoch);gl.uniform1f(u.time,this.time);gl.uniform1f(u.scene,this.scene);gl.uniform1f(u.pulse,this.pulse);gl.uniform1f(u.warp,this.warpAmount||0);gl.drawArrays(gl.TRIANGLES,0,6);}
     const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);
     if(!gl)this.fallback(c);
     const count=this.low||this.quality==='low'?400:800;
     c.save();
+    const dx=cam[0]*this.h*.025,dy=-cam[1]*this.h*.025;
     for(let i=0;i<count;i++){
-      const s=this.stars[i];const depth=((s.z+this.time*.002)%1);const scale=.18+depth*1.6;const x=this.cx+s.x*this.w*scale+this.pointer[0]*s.size*9,y=this.cy+s.y*this.h*scale+this.pointer[1]*s.size*8;
+      const s=this.stars[i];const depth=((s.z+this.time*(.009+floating*.009))%1);const scale=.08+1/(1.6-depth)*.65;const x=this.cx+s.x*this.w*scale+dx*(.3+depth*3),y=this.cy+s.y*this.h*scale+dy*(.3+depth*3);
       if(x<0||x>this.w||y<0||y>this.h)continue;
       const alpha=(.17+.35*s.size)*(.75+.25*Math.sin(this.time*.4+s.seed));
       c.fillStyle=`rgba(${s.i%9===0?'255,211,169':'182,202,235'},${alpha})`;
       const size=(.3+s.size*.8)*scale;c.beginPath();c.arc(x,y,size,0,Math.PI*2);c.fill();
       if((this.warpAmount||0)>.05){c.strokeStyle=`rgba(243,203,158,${alpha*.6})`;c.lineWidth=size*.7;c.beginPath();c.moveTo(x,y);c.lineTo(x+(x-this.cx)*this.warpAmount*.12,y+(y-this.cy)*this.warpAmount*.12);c.stroke();}
     }
-    if(this.scene===1)this.drawGalaxy(c);if(this.scene===2)this.drawTesseract(c);
-    this.drawSatellites(c);c.restore();
+    c.translate(dx,dy);if(this.scene===0)this.drawDepth(c);if(this.scene===1)this.drawGalaxy(c);if(this.scene===2)this.drawTesseract(c);
+    c.restore();
   }
   fallback(c){
     const r=this.h*.24,g=c.createRadialGradient(this.cx,this.cy,r*.65,this.cx,this.cy,r*1.6);g.addColorStop(0,'#090e18');g.addColorStop(.25,'#191c30');g.addColorStop(.34,'#80604c');g.addColorStop(.38,'#edbd8a');g.addColorStop(.42,'#4d3740');g.addColorStop(.57,'#14192a');g.addColorStop(1,'#080c16');c.fillStyle=g;c.fillRect(0,0,this.w,this.h);
     for(let i=0;i<22;i++){c.beginPath();c.ellipse(this.cx,this.cy,r*(.9+i*.007),r*(.74+i*.005),-.26,0,Math.PI*2);c.strokeStyle=`rgba(255,202,152,${.025+Math.sin(i)*.012})`;c.lineWidth=1;c.stroke();}
   }
+  drawDepth(c){
+    // Rings and dust occupy different depths; the camera keeps drifting after steering.
+    const t=this.time,scale=this.h*.25;
+    for(let i=0;i<9;i++){
+      const z=((i/9+t*.012)%1),radius=scale*(.55+z*2.6)*this.lens;
+      c.beginPath();c.ellipse(this.cx,this.cy,radius,radius*.79,-.27+this.camera[0]*.1,0,Math.PI*2);
+      c.strokeStyle=`rgba(255,209,165,${Math.sin(z*Math.PI)*.034})`;c.lineWidth=.7+z*.6;c.stroke();
+    }
+    for(let i=0;i<30;i++){const s=this.stars[900+i],a=s.seed+t*.025,r=(.29+s.z*.23)*this.h;const x=this.cx+Math.cos(a)*r,y=this.cy+Math.sin(a)*r*.7+Math.sin(t*.3+s.seed)*7*this.drift;c.fillStyle=`rgba(245,191,136,${.12+s.size*.2})`;c.beginPath();c.arc(x,y,1+s.size*1.3,0,Math.PI*2);c.fill();}
+  }
   drawTesseract(c){
-    const {vertices,edges}=tesseract(this.time);const size=this.h*.32;
+    const t=this.rotationClock;const {vertices,edges}=tesseract(0,{xw:this.axes.xw+t*.23,yw:this.axes.yw,zw:this.axes.zw+t*.17,yz:t*.13,distance:this.projection});const size=Math.min(this.h*.52,this.w*.28);
     const points=vertices.map(v=>{const perspective=3/(3-v[2]);return [this.cx+v[0]*size*perspective,this.cy+v[1]*size*perspective,v[2]];});
-    for(const [a,b]of edges){c.beginPath();c.moveTo(...points[a].slice(0,2));c.lineTo(...points[b].slice(0,2));c.strokeStyle=`rgba(151,223,225,${clamp(.3+(points[a][2]+points[b][2])*.18,.12,.7)})`;c.lineWidth=1;c.stroke();}
+    for(const [a,b]of edges){c.beginPath();c.moveTo(...points[a].slice(0,2));c.lineTo(...points[b].slice(0,2));c.strokeStyle=`rgba(151,223,225,${clamp(.3+(points[a][2]+points[b][2])*.18,.12,.7)})`;c.lineWidth=1.2;c.stroke();}
     for(const p of points){c.beginPath();c.arc(p[0],p[1],2.2,0,Math.PI*2);c.fillStyle='#b3eeec';c.shadowBlur=12;c.shadowColor='#a3eeff';c.fill();c.shadowBlur=0;}
   }
   drawGalaxy(c){
