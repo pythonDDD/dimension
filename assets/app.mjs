@@ -1,29 +1,20 @@
-import {FlipNumber} from './digits.mjs?v=5.0.0';
-import {sha256} from './hash.mjs?v=5.0.0';
-import {Cosmos} from './cosmos.mjs?v=5.0.0';
-import {MusicRadio} from './audio.mjs?v=5.0.0';
-import {DataFeed,isStale} from './data.mjs?v=5.0.0';
-import {RateFeed,convert,formatValue,formatRolling} from './converter.mjs?v=5.0.0';
-import {Arcade} from './arcade.mjs?v=5.0.0';
+import {MarketChart} from './market-chart.mjs?v=6.0.0';
+import {MempoolView} from './mempool-view.mjs?v=6.0.0';
+import {FlipNumber} from './digits.mjs?v=6.0.0';
+import {sha256} from './hash.mjs?v=6.0.0';
+import {Cosmos} from './cosmos.mjs?v=6.0.0';
+import {DataFeed,isStale} from './data.mjs?v=6.0.0';
+import {RateFeed,convert,formatValue,formatRolling} from './converter.mjs?v=6.0.0';
+import {Arcade} from './arcade.mjs?v=6.0.0';
 const $=id=>document.getElementById(id),text=(id,value)=>$(id).textContent=value;
 let toastTimer;function toast(message){text('toast',message);$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000);}
 const integer=n=>Number.isFinite(n)?new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(n):'—';
 const time=at=>new Date(at).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
 function download(canvas,name){canvas.toBlob(blob=>{if(!blob){toast('画像を保存できませんでした');return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});}
-let prefs={};try{prefs=JSON.parse(localStorage.getItem('dimension-settings-v4')||'{}')||{};}catch{}
-function savePrefs(){try{localStorage.setItem('dimension-settings-v4',JSON.stringify(prefs));}catch{}}
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
 const cosmos=new Cosmos($('space'),$('particles'),status=>text('render-status',status));cosmos.configure({speed:.35,drift:.65,reduced:reduce.matches});
-const ambient=new MusicRadio({frame:$('ncs-player'),local:$('local-player'),panel:$('music-panel')}),feed=new DataFeed(),rates=new RateFeed();
-if(Number.isFinite(prefs.volume))ambient.setVolume(prefs.volume);
-$('music-mode').value='ncs';$('volume').value=String(ambient.volume*100);$('game-sound').checked=prefs.effects!==false;ambient.effects=$('game-sound').checked;
-const arcade=new Arcade({ambient,celebrate:()=>cosmos.celebrate()});
-function audioUI(){const playing=ambient.playing;document.body.classList.toggle('music-on',playing);$('audio-toggle').setAttribute('aria-pressed',String(playing));text('audio-symbol',playing?'Ⅱ':'▶');text('audio-label',playing?'音楽を停止':'音楽を再生');$('music-details').setAttribute('aria-expanded',String(!$('music-panel').hidden));text('music-status',ambient.error|| (playing?'再生中':ambient.mode==='local'?'▶ で再生':'NCS公式 · プレーヤー内の ▶ でも再生できます'));text('track-title',ambient.mode==='local'?(ambient.title||'音声ファイルを選択'):'Recall — gabriawll');}
-ambient.addEventListener('statechange',audioUI);$('audio-toggle').addEventListener('click',async()=>{if($('audio-toggle').disabled)return;$('audio-toggle').disabled=true;text('audio-label','接続中…');try{await ambient.toggle();}catch(error){toast(error.message);text('music-status',error.message);}finally{$('audio-toggle').disabled=false;audioUI();}});
-$('music-mode').addEventListener('change',()=>{ambient.setMode($('music-mode').value);$('music-panel').hidden=false;audioUI();if(ambient.mode==='local'&&!ambient.local.src)$('music-file').click();});
-$('music-file').addEventListener('change',async()=>{const file=$('music-file').files[0];if(!file)return;ambient.setFile(file);$('music-mode').value='local';try{await ambient.start();}catch(error){toast(error.message);}audioUI();});
-$('music-details').addEventListener('click',()=>{if(!$('music-panel').hidden)ambient.stop();$('music-panel').hidden=!$('music-panel').hidden;audioUI();});$('music-close').addEventListener('click',()=>{ambient.stop();$('music-panel').hidden=true;audioUI();$('audio-toggle').focus();});
-$('volume').addEventListener('input',()=>{ambient.setVolume(Number($('volume').value)/100);prefs.volume=ambient.volume;savePrefs();});$('game-sound').addEventListener('change',()=>{ambient.effects=$('game-sound').checked;prefs.effects=ambient.effects;savePrefs();});
+const feed=new DataFeed(),rates=new RateFeed();
+const arcade=new Arcade({celebrate:()=>cosmos.celebrate()});
 $('warp').addEventListener('click',()=>cosmos.warp());$('drift').addEventListener('input',()=>cosmos.configure({drift:Number($('drift').value)/100}));
 let motionPaused=reduce.matches;function motionUI(){$('motion').setAttribute('aria-pressed',String(motionPaused));$('motion').setAttribute('aria-label',motionPaused?'宇宙の動きを再開する':'宇宙の動きを止める');text('motion',motionPaused?'▶':'Ⅱ');cosmos.configure({paused:motionPaused,reduced:reduce.matches});}motionUI();$('motion').addEventListener('click',()=>{motionPaused=!motionPaused;cosmos.configure({reduced:motionPaused&&reduce.matches});$('motion').setAttribute('aria-pressed',String(motionPaused));$('motion').setAttribute('aria-label',motionPaused?'宇宙の動きを再開する':'宇宙の動きを止める');text('motion',motionPaused?'▶':'Ⅱ');cosmos.configure({paused:motionPaused});});reduce.addEventListener('change',()=>{motionPaused=reduce.matches;motionUI();});
 $('capture').addEventListener('click',()=>{try{download(cosmos.capture(),'dimension-orbit.png');}catch{toast('このブラウザでは画像を保存できませんでした');}});
@@ -31,7 +22,10 @@ let zen=false,scrollBeforeZen=0,heroVisible=true;function setZen(value){zen=valu
 const heroObserver=new IntersectionObserver(entries=>{heroVisible=entries[0].isIntersecting;cosmos.configure({hidden:document.hidden||(!heroVisible&&!zen)});},{threshold:0});heroObserver.observe(document.querySelector('.hero'));
 
 const rolling=Object.fromEntries(['JPY','USD','STX','GMT','SOL','ETH'].map(key=>[key,new FlipNumber($('rate-'+key))]));
-let converted={},amount=1;function renderConverter(){const raw=$('convert-amount').value.trim().replace(/,/g,''),valid=/^(?:\d+\.?\d*|\.\d+)$/.test(raw)&&Number(raw)<=1e18;amount=valid?Number(raw):null;const data=rates.data,from=$('convert-currency').value;const btc=amount===null?null:convert(amount,from,'BTC',data);text('btc-equivalent',btc===null?'= — BTC':`= ${formatValue(btc)} BTC`);text('convert-error',valid?'':raw?'0以上の数値を入力してください。':'金額を入力してください。');$('convert-amount').style.fontSize=raw.length>12?'28px':raw.length>8?'36px':raw.length>5?'48px':'';
+const amountMeasure=document.createElement('canvas').getContext('2d');let measuredInput='',measuredWidth=0;
+function fitAmount(){const input=$('convert-amount'),raw=input.value||'0',width=input.clientWidth;if(!width||(measuredInput===raw&&measuredWidth===width))return;measuredInput=raw;measuredWidth=width;const style=getComputedStyle(input),base=Number.parseFloat(style.getPropertyValue('--amount-font'))||64;amountMeasure.font=`${style.fontWeight} ${base}px ${style.fontFamily}`;const needed=amountMeasure.measureText(raw).width;input.style.fontSize=Math.max(14,Math.min(base,Math.floor((width-10)/Math.max(1,needed)*base)))+'px';input.scrollLeft=0;}
+new ResizeObserver(fitAmount).observe($('convert-amount'));
+let converted={},amount=1;function renderConverter(){const raw=$('convert-amount').value.trim().replace(/,/g,''),valid=/^(?:\d+\.?\d*|\.\d+)$/.test(raw)&&Number(raw)<=1e18;amount=valid?Number(raw):null;const data=rates.data,from=$('convert-currency').value;const btc=amount===null?null:convert(amount,from,'BTC',data);text('btc-equivalent',btc===null?'= — BTC':`= ${formatValue(btc)} BTC`);text('convert-error',valid?'':raw?'0以上の数値を入力してください。':'金額を入力してください。');fitAmount();
  for(const key of ['JPY','USD','STX','GMT','SOL','ETH']){converted[key]=amount===null?null:convert(amount,from,key,data);rolling[key].set(formatRolling(converted[key]),converted[key]);text('source-'+key,rates.source(key));$('source-'+key).classList.toggle('is-live',rates.source(key)==='LIVE');const button=document.querySelector(`[data-copy-rate="${key}"]`);button.disabled=converted[key]===null;button.title=converted[key]===null?'レートを取得できていません':`${formatValue(converted[key])} ${key} をコピー`;}
  const rec=rates.record,unavailable=Object.keys(data).length<8;
  const status=rates.live?`実約定 ${new Date(rates.ticks['BTC-USD'].at).toLocaleTimeString('ja-JP')} 更新`:!rec?.data?'取得できませんでした · 更新で再試行':rates.stale?`保存レート · ${time(rec.updatedAt)} 取得`:`${time(rec.updatedAt)} 取得 · 60秒更新${unavailable?' · 一部未取得':''}`;
@@ -42,7 +36,7 @@ rates.addEventListener('update',renderConverter);$('convert-amount').addEventLis
 $('refresh-rates').addEventListener('click',async()=>{$('refresh-rates').disabled=true;text('refresh-rates','取得中…');try{await rates.refresh();}finally{$('refresh-rates').disabled=false;text('refresh-rates','↻ 更新');}});
 document.querySelectorAll('[data-copy-rate]').forEach(button=>button.addEventListener('click',async()=>{const key=button.dataset.copyRate,value=converted[key];if(value===null)return;try{await navigator.clipboard.writeText(formatValue(value).replace(/,/g,''));toast(`${key} の換算額をコピーしました`);}catch{toast('コピーできませんでした。表示された数値を選択してください。');}}));
 
-let currentHash='',lastBlockId='',txSignature='';
+let currentHash='',lastBlockId='';
 function showHash(hash,label){currentHash=hash;text('hash-value',hash);text('hash-origin',label);drawHash(hash);}
 function drawHash(hash){const canvas=$('hash-canvas'),c=canvas.getContext('2d');if(!c)return;const bytes=hash.match(/.{2}/g)?.map(h=>parseInt(h,16))||Array(32).fill(0);c.clearRect(0,0,480,320);const g=c.createRadialGradient(240,160,12,240,160,150);g.addColorStop(0,'#1b2738');g.addColorStop(1,'#10162000');c.fillStyle=g;c.fillRect(0,0,480,320);c.save();c.translate(240,160);const hue=bytes[27]*360/255,points=6+bytes[28]%7;
  for(let layer=0;layer<5;layer++){const radius=40+layer*23,turn=bytes[layer+16]/255*Math.PI;const vertices=[];for(let i=0;i<points;i++){const angle=i/points*Math.PI*2+turn;vertices.push([Math.cos(angle)*radius,Math.sin(angle)*radius]);}c.strokeStyle=`hsla(${(hue+layer*24)%360},45%,70%,${.5-layer*.065})`;c.lineWidth=layer===0?1.8:.8;c.beginPath();for(let i=0;i<points;i++){const a=vertices[i],b=vertices[(i+2+bytes[20+layer]%3)%points];c.moveTo(...a);c.lineTo(...b);}c.stroke();for(const v of vertices){c.fillStyle=`hsla(${(hue+layer*24)%360},60%,80%,.8)`;c.beginPath();c.arc(v[0],v[1],layer%2?1.5:2.3,0,Math.PI*2);c.fill();}}
@@ -51,16 +45,18 @@ let hashJob=0,hashDebounce;async function hashInput(){const job=++hashJob,input=
 $('hash-input').addEventListener('input',()=>{hashJob++;clearTimeout(hashDebounce);hashDebounce=setTimeout(hashInput,180);});$('hash-live').addEventListener('click',()=>{$('hash-input').value='';hashJob++;hashInput();});$('hash-save').addEventListener('click',()=>{if(currentHash)download($('hash-canvas'),`dimension-hash-${currentHash.slice(-8)}.png`);else toast('ブロックを待つか、文字を入力してください');});
 function renderFees(){const r=feed.records.fees,d=r?.data;for(const[id,key]of [['fee-fast','fastestFee'],['fee-normal','halfHourFee'],['fee-slow','economyFee']])text(id,d?String(d[key]):'—');const size=Number($('tx-size').value),valid=Number.isInteger(size)&&size>=1&&size<=100000;const fee=d&&valid?Math.ceil(d.halfHourFee*size):null;text('fee-cost',fee===null?'— sats':`${integer(fee)} sats`);const jpy=fee===null?null:convert(fee,'SAT','JPY',rates.data);text('fee-fiat',`${isStale(r)?'手数料の最新値を取得待ち · ':''}${jpy!==null?`約 ¥${new Intl.NumberFormat('ja-JP',{maximumFractionDigits:2}).format(jpy)} · ${rates.stale?'保存レート · ':''}`:''}標準レートの目安 · mempool.space`);}
 $('tx-size').addEventListener('input',renderFees);
-function renderNetwork(){const records=feed.records,block=records.blocks?.data?.[0];if(block){text('orbit-height',`# ${integer(block.height)}`);text('block-height',integer(block.height));text('block-transactions',`${integer(block.tx_count)} transactions`);text('block-size',Number.isFinite(block.size)?`${(block.size/1e6).toFixed(2)} MB`:`${(block.weight/4e6).toFixed(2)} MvB`);if(lastBlockId!==block.id){lastBlockId=block.id;cosmos.setBlocks(records.blocks.data);const chips=records.blocks.data.slice(0,6).map(b=>{const button=document.createElement('button');button.className='block-chip';button.textContent=String(b.height).slice(-4);const label=document.createElement('span');label.textContent=`${integer(b.tx_count)} TX`;button.append(label);button.title=`#${integer(b.height)} のハッシュ模様を表示`;button.setAttribute('aria-label',button.title);button.addEventListener('click',()=>{hashJob++;clearTimeout(hashDebounce);$('hash-input').value='';showHash(b.id,`BLOCK #${b.height}`);toast(`#${integer(b.height)} の Hash canvas`);});return button;});$('block-chain').replaceChildren(...chips);if(!$('hash-input').value)showHash(block.id,'LATEST BLOCK');}}
- const stale=isStale(records.blocks);text('network-status',stale?'保存値 / 接続待ち':'LIVE');$('network-status').classList.toggle('stale',stale);text('mempool-count',records.mempool?.data?`${integer(records.mempool.data.count)} tx${isStale(records.mempool)?' · 保存値':''}`:'— tx');
+const mempool=new MempoolView(feed,b=>{hashJob++;clearTimeout(hashDebounce);$('hash-input').value='';showHash(b.id,`BLOCK #${b.height}`);});
+const marketChart=new MarketChart(rates);
+function renderNetwork(){const records=feed.records,block=records.blocks?.data?.[0];if(block){text('orbit-height',`# ${integer(block.height)}`);if(lastBlockId!==block.id){lastBlockId=block.id;cosmos.setBlocks(records.blocks.data);if(!$('hash-input').value)showHash(block.id,'LATEST BLOCK');}}
+ text('mempool-count',records.mempool?.data?`${integer(records.mempool.data.count)} tx${isStale(records.mempool)?' · 保存値':''}`:'— tx');
  const market=records.market?.data;if(market&&!rates.live){text('btc-price',`$${integer(market.last)}`);const change=(market.last/market.open-1)*100;text('btc-change',`${change>=0?'+':''}${change.toFixed(2)}%${isStale(records.market)?' · 保存値':' · 24h'}`);$('btc-change').classList.toggle('negative',change<0);}
- const tx=records.transactions;if(tx?.data){const signature=tx.data.map(t=>t.txid).join(',');if(signature!==txSignature){txSignature=signature;$('tx-stream').replaceChildren(...tx.data.slice(0,8).map(t=>{const item=document.createElement('div');item.className='transaction';const value=document.createElement('span'),detail=document.createElement('small');value.textContent=Number.isFinite(t.value)?`${formatValue(t.value/1e8)} BTC`:t.txid.slice(0,10)+'…';detail.textContent=`${t.txid.slice(0,6)}… · ${t.vsize>0?(t.fee/t.vsize).toFixed(1):'—'} sat/vB`;item.title=`TXID ${t.txid} · ${integer(t.vsize)} vB · fee ${integer(t.fee)} sats`;item.append(value,detail);return item;}));}}
- text('stream-status',isStale(tx)?'接続待ち':'RECENT TX');$('stream-dot').classList.toggle('stale',isStale(tx));renderFees();tickBlock();
+ mempool.render();renderFees();tickBlock();
 }
-function tickBlock(){const block=feed.records.blocks?.data?.[0];if(!block)return;const elapsed=Math.floor(Date.now()/1000-block.timestamp),minutes=Math.floor(elapsed/60),seconds=elapsed%60;text('block-age',elapsed<0?'時刻差':minutes>999?'999m+':`${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`);text('block-age-label',elapsed<0?'ブロック時刻が端末より未来':'最後のブロックから');text('orbit-time',`${new Date(block.timestamp*1000).toLocaleTimeString('ja-JP')} · ${isStale(feed.records.blocks)?'保存データ':'mempool.space'}`);}
+function tickBlock(){const block=feed.records.blocks?.data?.[0];if(!block)return;text('orbit-time',`${new Date(block.timestamp*1000).toLocaleTimeString('ja-JP')} · ${isStale(feed.records.blocks)?'保存データ':'mempool.space'}`);mempool.tick();}
+feed.addEventListener('connection',()=>mempool.render());
 feed.addEventListener('update',renderNetwork);feed.addEventListener('block',e=>{cosmos.celebrate();toast(`BLOCK #${integer(e.detail.height)} · 新しいブロック`);});
 const freshnessTimer=setInterval(()=>{if(!document.hidden){renderConverter();renderNetwork();}},15000);const blockTimer=setInterval(()=>{if(!document.hidden)tickBlock();},1000);
-document.addEventListener('visibilitychange',()=>{cosmos.configure({hidden:document.hidden||(!heroVisible&&!zen)});ambient.visibility(document.hidden).catch(()=>audioUI());if(document.hidden){feed.stop();rates.stop();}else{feed.start();rates.start();renderConverter();renderNetwork();}});
+document.addEventListener('visibilitychange',()=>{cosmos.configure({hidden:document.hidden||(!heroVisible&&!zen)});if(document.hidden){feed.stop();rates.stop();marketChart.stop();}else{feed.start();rates.start();marketChart.start();renderConverter();renderNetwork();}});
 window.addEventListener('online',()=>{if(!document.hidden){feed.poll();rates.start();rates.refresh();}});window.addEventListener('offline',()=>{for(const key of Object.keys(feed.records))feed.fail(key,'offline');if(rates.record){rates.record.error='offline';rates.stop();rates.emit();}});
-window.addEventListener('pagehide',()=>{feed.stop();rates.stop();arcade.pause();ambient.visibility(true).catch(()=>{});});window.addEventListener('pageshow',e=>{if(e.persisted&&!document.hidden){feed.start();rates.start();ambient.visibility(false).catch(()=>{});}});
-feed.restore();rates.restore();renderConverter();if(!document.hidden){feed.start();rates.start();}audioUI();
+window.addEventListener('pagehide',()=>{feed.stop();rates.stop();marketChart.stop();arcade.pause();});window.addEventListener('pageshow',e=>{if(e.persisted&&!document.hidden){feed.start();rates.start();marketChart.start();}});
+feed.restore();rates.restore();renderConverter();if(!document.hidden){feed.start();rates.start();marketChart.start();}

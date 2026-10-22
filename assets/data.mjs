@@ -1,4 +1,5 @@
-import { finite, mergeBlocks, normalizeCandles, isHex64 } from './bitcoin.mjs?v=5.0.0';
+import { finite, mergeBlocks, normalizeCandles, isHex64 } from './bitcoin.mjs?v=6.0.0';
+import {normalizeProjected} from './mempool.mjs?v=6.0.0';
 const MEMPOOL='https://mempool.space/api';
 const EXCHANGE='https://api.exchange.coinbase.com/products';
 export const STALE_AFTER=150_000;
@@ -11,7 +12,7 @@ export async function requestJSON(url,{timeout=12000,signal}={}){
   finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
 }
 export class DataFeed extends EventTarget {
-  constructor(){super();this.records={};this.socket=null;this.pollTimer=null;this.retryTimer=null;this.backoff=3000;this.active=false;this.polling=false;this.lastLiveHeight=null;this.socketAt=0;this.chartCache=new Map();}
+  constructor(){super();this.records={};this.socket=null;this.pollTimer=null;this.retryTimer=null;this.backoff=3000;this.active=false;this.polling=false;this.lastLiveHeight=null;this.socketAt=0;this.connected=false;this.chartCache=new Map();}
   emit(type,detail){this.dispatchEvent(new CustomEvent(type,{detail}));}
   restore(){
     try{const cached=JSON.parse(localStorage.getItem('dimension-data-v2')||'null');if(!cached||typeof cached!=='object')return;
@@ -39,9 +40,9 @@ export class DataFeed extends EventTarget {
     const jobs=[
       ['blocks',`${MEMPOOL}/v1/blocks`,d=>{if(!Array.isArray(d))throw Error('Invalid blocks');this.ingestBlocks(d);return null;}],
       ['mempool',`${MEMPOOL}/mempool`,d=>{if(!finite(d.count)||d.count<0||!finite(d.vsize))throw Error('Invalid mempool');return d;}],
+      ['projected',`${MEMPOOL}/v1/fees/mempool-blocks`,normalizeProjected],
       ['fees',`${MEMPOOL}/v1/fees/recommended`,d=>{if(!['fastestFee','halfHourFee','hourFee','economyFee'].every(k=>finite(d[k])&&d[k]>=0))throw Error('Invalid fees');return d;}],
       ['market',`${EXCHANGE}/BTC-USD/stats`,d=>{const result=Object.fromEntries(['open','high','low','last','volume'].map(k=>[k,Number(d[k])]));if(!Object.values(result).every(finite)||result.last<=0||result.open<=0)throw Error('Invalid market');return result;}],
-      ['transactions',`${MEMPOOL}/mempool/recent`,d=>{if(!Array.isArray(d))throw Error('Invalid transactions');return d.filter(t=>isHex64(t.txid)&&finite(t.fee)&&finite(t.vsize)).slice(0,10);}]
     ];
     await Promise.allSettled(jobs.map(async([key,url,parse])=>{try{const raw=await requestJSON(url,{signal:controller.signal});if(!this.active||this.controller!==controller||controller.signal.aborted)return;const data=parse(raw);if(data!==null){const at=key==='prices'&&finite(data.time)?Math.min(Date.now(),data.time*1000):Date.now();this.accept(key,data,at);}}catch(error){if(this.active&&this.controller===controller&&!controller.signal.aborted)this.fail(key,error);}}));
     if(this.controller!==controller)return;
@@ -51,14 +52,20 @@ export class DataFeed extends EventTarget {
     if(!this.active||this.socket)return;
     let socket;try{socket=new WebSocket('wss://mempool.space/api/v1/ws');}catch{this.retry();return;}
     this.socket=socket;
-    socket.onopen=()=>{if(!this.active){socket.close();return;}this.backoff=3000;this.socketAt=Date.now();socket.send(JSON.stringify({action:'init'}));socket.send(JSON.stringify({action:'want',data:['blocks','stats']}));this.emit('connection','open');};
-    socket.onmessage=e=>{if(!this.active)return;this.socketAt=Date.now();try{const d=JSON.parse(e.data);if(Array.isArray(d.blocks))this.ingestBlocks(d.blocks);if(d.block)this.ingestBlocks([d.block]);if(d.mempoolInfo&&finite(d.mempoolInfo.size)&&finite(d.mempoolInfo.bytes))this.accept('mempool',{count:d.mempoolInfo.size,vsize:d.mempoolInfo.bytes});}catch{/* Ignore non-data frames. */}};
+    socket.onopen=()=>{if(!this.active||this.socket!==socket){socket.close();return;}this.connected=true;this.backoff=3000;this.socketAt=Date.now();socket.send(JSON.stringify({action:'init'}));socket.send(JSON.stringify({action:'want',data:['blocks','stats','mempool-blocks']}));this.emit('connection','open');};
+    socket.onmessage=e=>{if(!this.active||this.socket!==socket)return;this.socketAt=Date.now();try{this.ingestFrame(JSON.parse(e.data));}catch{/* Ignore non-data frames. */}};
     socket.onerror=()=>socket.close();
-    socket.onclose=()=>{if(this.socket!==socket)return;this.socket=null;this.emit('connection','closed');this.retry();};
+    socket.onclose=()=>{if(this.socket!==socket)return;this.socket=null;this.connected=false;this.emit('connection','closed');this.retry();};
+  }
+  ingestFrame(d){
+    if(Array.isArray(d.blocks))this.ingestBlocks(d.blocks);if(d.block)this.ingestBlocks([d.block]);
+    if(d['mempool-blocks']){try{this.accept('projected',normalizeProjected(d['mempool-blocks']));}catch(error){this.fail('projected',error);}}
+    if(d.mempoolInfo&&finite(d.mempoolInfo.size)&&d.mempoolInfo.size>=0&&finite(d.mempoolInfo.bytes)&&d.mempoolInfo.bytes>=0)this.accept('mempool',{count:d.mempoolInfo.size,vsize:d.mempoolInfo.bytes});
+    if(d.fees&&['fastestFee','halfHourFee','hourFee','economyFee'].every(k=>finite(d.fees[k])&&d.fees[k]>=0))this.accept('fees',d.fees);
   }
   retry(){if(!this.active)return;clearTimeout(this.retryTimer);this.retryTimer=setTimeout(()=>this.connect(),this.backoff);this.backoff=Math.min(this.backoff*2,60000);}
   start(){if(this.active)return;this.active=true;this.poll();this.connect();this.pollTimer=setInterval(()=>this.poll(),60000);}
-  stop(){this.active=false;clearInterval(this.pollTimer);clearTimeout(this.retryTimer);this.controller?.abort();this.controller=null;this.polling=false;if(this.socket){const old=this.socket;this.socket=null;old.close();}}
+  stop(){this.active=false;this.connected=false;clearInterval(this.pollTimer);clearTimeout(this.retryTimer);this.controller?.abort();this.controller=null;this.polling=false;if(this.socket){const old=this.socket;this.socket=null;old.close();}}
   async candles(days){
     const cache=this.chartCache.get(days);if(cache&&Date.now()-cache.at<60000)return cache.data;
     const granularity=days===1?3600:86400;const end=Math.floor(Date.now()/1000)+1;const start=Math.floor((end-days*86400)/granularity)*granularity;

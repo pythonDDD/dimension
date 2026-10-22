@@ -1,4 +1,4 @@
-import {newTetris,startTetris,pauseTetris,moveTetris,rotateTetris,holdTetris,dropTetris,stepTetris,cells,ghostY} from './tetris.mjs?v=5.0.0';
+import {newTetris,startTetris,pauseTetris,moveTetris,rotateTetris,holdTetris,dropTetris,stepTetris,cells,ghostY} from './tetris.mjs?v=6.0.0';
 const $=id=>document.getElementById(id);
 const COLORS={I:'#8fced4',O:'#f5be68',T:'#b8a3db',S:'#90c3ab',Z:'#d88686',J:'#90a8d4',L:'#e9a36a'};
 export class BitcoinTetris {

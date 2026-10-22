@@ -1,10 +1,10 @@
-import {requestJSON,isStale} from './data.mjs?v=5.0.0';
+import {requestJSON,isStale} from './data.mjs?v=6.0.0';
 export const CURRENCIES=['SAT','BTC','JPY','USD','STX','GMT','SOL','ETH'];
 const PRODUCTS=['BTC-USD','ETH-USD','SOL-USD','STX-USD','GMT-USD'];
 export function parseRates(payload){if(payload?.data?.currency!=='BTC')throw Error('Invalid base currency');const rates={BTC:1,SAT:1e8};for(const key of CURRENCIES.slice(2)){const value=Number(payload.data.rates?.[key]);if(Number.isFinite(value)&&value>0)rates[key]=value;}if(!rates.USD||!rates.JPY)throw Error('Incomplete exchange rates');return rates;}
 export function convert(amount,from,to,rates){if(!Number.isFinite(amount)||amount<0||amount>1e18||!CURRENCIES.includes(from)||!CURRENCIES.includes(to))return null;const a=rates?.[from],b=rates?.[to];return Number.isFinite(a)&&a>0&&Number.isFinite(b)&&b>0?amount/a*b:null;}
-export function formatValue(value){if(value===null||!Number.isFinite(value))return '—';if(value===0)return '0';const decimals=value>=10000?2:value>=1?6:Math.min(14,Math.ceil(-Math.log10(value))+5);return new Intl.NumberFormat('en-US',{maximumFractionDigits:decimals}).format(value);}
-export function formatRolling(value){if(value===null||!Number.isFinite(value))return '—';if(value===0)return '0';if(value>=1e9)return value.toExponential(6);const decimals=value>=10000?2:value>=1?6:Math.min(14,Math.ceil(-Math.log10(value))+5);return new Intl.NumberFormat('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}).format(value);}
+export function formatValue(value){if(value===null||!Number.isFinite(value))return '—';if(value===0)return '0';if(value<1e-12)return value.toExponential(8);const decimals=value>=10000?2:value>=1?6:Math.min(14,Math.ceil(-Math.log10(value))+5);return new Intl.NumberFormat('en-US',{maximumFractionDigits:decimals}).format(value);}
+export function formatRolling(value){if(value===null||!Number.isFinite(value))return '—';if(value===0)return '0';if(value>=1e9||value<1e-12)return value.toExponential(6);const decimals=value>=10000?2:value>=1?6:Math.min(14,Math.ceil(-Math.log10(value))+5);return new Intl.NumberFormat('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}).format(value);}
 export function deriveRates(snapshot,ticks,now=Date.now()){
  const base={BTC:1,SAT:1e8,...snapshot},data={...base},btc=ticks?.['BTC-USD'];
  if(!btc||now-btc.at>60000||!Number.isFinite(btc.price)||btc.price<=0)return data;
@@ -20,7 +20,7 @@ export class RateFeed extends EventTarget {
  accept(message,now=Date.now()){
   if(message.type!=='ticker'||!PRODUCTS.includes(message.product_id))return false;const price=Number(message.price),at=Date.parse(message.time);if(!Number.isFinite(price)||price<=0||!Number.isFinite(at)||at>now+10000||now-at>60000)return false;
   const prev=this.ticks[message.product_id],seq=Number(message.sequence);if(prev&&(at<prev.at||(Number.isFinite(seq)&&seq<=prev.sequence)))return false;
-  this.ticks[message.product_id]={price,at,sequence:seq,open:Number(message.open_24h)};return true;
+  this.ticks[message.product_id]={price,at,sequence:seq,open:Number(message.open_24h)};this.dispatchEvent(new CustomEvent('tick',{detail:{product:message.product_id,...this.ticks[message.product_id]}}));return true;
  }
  connect(){
   if(!this.active||this.socket||typeof WebSocket==='undefined')return;

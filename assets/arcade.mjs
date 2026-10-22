@@ -1,10 +1,10 @@
-import {BitcoinTetris} from './tetris-view.mjs?v=5.0.0';
-import {newEcho,nextEcho,echoInput,newMatch,playMatch,matchMoves,adjacent,newBreaker,launchBreaker,stepBreaker} from './games.mjs?v=5.0.0';
+import {BitcoinTetris} from './tetris-view.mjs?v=6.0.0';
+import {newEcho,nextEcho,echoInput,newMatch,playMatch,matchMoves,adjacent,newBreaker,launchBreaker,stepBreaker} from './games.mjs?v=6.0.0';
 const $=id=>document.getElementById(id),text=(id,value)=>$(id).textContent=value,seed=()=>Math.floor(Math.random()*4294967295);
 const ICONS=['₿','◇','≋','Ӿ','G'],NAMES=['Bitcoin','Ethereum','Solana','Stacks','GMT'];
 export class Arcade {
- constructor({ambient,celebrate=()=>{}}){
-  this.ambient=ambient;this.celebrate=celebrate;this.best={};this.echoTimers=new Set();this.matchEpoch=0;this.breakerKeys=new Set();
+ constructor({celebrate=()=>{}}){
+  this.celebrate=celebrate;this.best={};this.echoTimers=new Set();this.matchEpoch=0;this.breakerKeys=new Set();
   try{const old=JSON.parse(localStorage.getItem('dimension-arcade-v3')||'{}');const current=JSON.parse(localStorage.getItem('dimension-arcade-v4')||'{}');for(const key of ['echo','blocks','breaker','match']){const value=Number(current[key]??(key==='echo'?old.echo:0));this.best[key]=Number.isFinite(value)&&value>=0?value:0;}}catch{}
   for(const kind of ['echo','blocks','breaker','match'])this.score(kind,0);
   this.initEcho();this.tetris=new BitcoinTetris({score:(kind,value)=>this.score(kind,value),celebrate:this.celebrate});this.initBreaker();this.initMatch();
@@ -16,23 +16,23 @@ export class Arcade {
  later(fn,ms){const id=setTimeout(()=>{this.echoTimers.delete(id);fn();},ms);this.echoTimers.add(id);return id;}
  clearEcho(){for(const t of this.echoTimers)clearTimeout(t);this.echoTimers.clear();document.querySelectorAll('[data-pad]').forEach(p=>p.classList.remove('lit'));}
  echoPads(enabled){document.querySelectorAll('[data-pad]').forEach(p=>p.disabled=!enabled);}
- flash(index,duration=320){const pad=document.querySelector(`[data-pad="${index}"]`);pad.classList.add('lit');this.ambient.effect('pad',index);this.later(()=>pad.classList.remove('lit'),duration);}
+ flash(index,duration=320){const pad=document.querySelector(`[data-pad="${index}"]`);pad.classList.add('lit');this.later(()=>pad.classList.remove('lit'),duration);}
  initEcho(){
   this.resetEcho();$('echo-start').addEventListener('click',()=>{if(this.echo.phase==='paused'){this.listenEcho();return;}if(this.echo.phase==='over'||this.echo.round>=12)this.resetEcho();if(['ready','complete'].includes(this.echo.phase)){nextEcho(this.echo);$('echo-board').focus({preventScroll:true});this.listenEcho();}});
   $('echo-pause').addEventListener('click',()=>this.pauseEcho());$('echo-reset').addEventListener('click',()=>this.resetEcho());
   document.querySelectorAll('[data-pad]').forEach(p=>p.addEventListener('click',()=>this.inputEcho(Number(p.dataset.pad))));
   $('echo-board').addEventListener('keydown',e=>{if(/^[1-4]$/.test(e.key)&&!e.repeat){e.preventDefault();this.inputEcho(Number(e.key)-1);}});
  }
- resetEcho(){this.clearEcho();this.echo=newEcho(seed());this.echoPads(false);this.ambient.setGame(null);this.score('echo',0);text('echo-round','01');text('echo-status','12ラウンド。光る順番を覚えよう。');text('echo-start','スタート ↗');$('echo-start').disabled=false;$('echo-pause').disabled=true;}
+ resetEcho(){this.clearEcho();this.echo=newEcho(seed());this.echoPads(false);this.score('echo',0);text('echo-round','01');text('echo-status','12ラウンド。光る順番を覚えよう。');text('echo-start','スタート ↗');$('echo-start').disabled=false;$('echo-pause').disabled=true;}
  listenEcho(){
-  this.clearEcho();this.echo.phase='listen';this.echo.position=0;this.echoPads(false);this.ambient.setGame('echo');text('echo-round',String(this.echo.round).padStart(2,'0'));text('echo-status',`ROUND ${this.echo.round} / 12 · 順番を見て、覚える。`);text('echo-start','再生中…');$('echo-start').disabled=true;$('echo-pause').disabled=false;
+  this.clearEcho();this.echo.phase='listen';this.echo.position=0;this.echoPads(false);text('echo-round',String(this.echo.round).padStart(2,'0'));text('echo-status',`ROUND ${this.echo.round} / 12 · 順番を見て、覚える。`);text('echo-start','再生中…');$('echo-start').disabled=true;$('echo-pause').disabled=false;
   const interval=Math.max(440,770-this.echo.round*22);this.echo.sequence.forEach((pad,i)=>this.later(()=>this.flash(pad),500+i*interval));
   this.later(()=>{this.echo.phase='input';this.echoPads(true);text('echo-status',`あなたの番 · 0 / ${this.echo.sequence.length}`);text('echo-start','入力中…');},500+this.echo.sequence.length*interval);
  }
- inputEcho(pad){const result=echoInput(this.echo,pad);if(result==='ignored')return;this.flash(pad,180);if(result==='wrong'){this.echoPads(false);this.ambient.setGame(null);$('echo-start').disabled=false;$('echo-pause').disabled=true;text('echo-start','もう一度 ↗');text('echo-status',`正解は ${this.echo.sequence.map(i=>i+1).join(' → ')} · ${this.echo.round-1} ラウンド達成`);return;}
-  this.score('echo',this.echo.score);if(result==='complete'){this.echoPads(false);this.ambient.setGame(null);$('echo-start').disabled=false;$('echo-pause').disabled=true;text('echo-start',this.echo.round===12?'もう一度 ↗':'次のラウンド ↗');text('echo-status',this.echo.round===12?'PERFECT HASH · 全12ラウンドクリア！':`ROUND ${this.echo.round} CLEAR · +${this.echo.round*100}`);if(this.echo.round===12)this.celebrate();}else text('echo-status',`あなたの番 · ${this.echo.position} / ${this.echo.sequence.length}`);
+ inputEcho(pad){const result=echoInput(this.echo,pad);if(result==='ignored')return;this.flash(pad,180);if(result==='wrong'){this.echoPads(false);$('echo-start').disabled=false;$('echo-pause').disabled=true;text('echo-start','もう一度 ↗');text('echo-status',`正解は ${this.echo.sequence.map(i=>i+1).join(' → ')} · ${this.echo.round-1} ラウンド達成`);return;}
+  this.score('echo',this.echo.score);if(result==='complete'){this.echoPads(false);$('echo-start').disabled=false;$('echo-pause').disabled=true;text('echo-start',this.echo.round===12?'もう一度 ↗':'次のラウンド ↗');text('echo-status',this.echo.round===12?'PERFECT HASH · 全12ラウンドクリア！':`ROUND ${this.echo.round} CLEAR · +${this.echo.round*100}`);if(this.echo.round===12)this.celebrate();}else text('echo-status',`あなたの番 · ${this.echo.position} / ${this.echo.sequence.length}`);
  }
- pauseEcho(){if(!['listen','input'].includes(this.echo.phase))return;this.clearEcho();this.echo.phase='paused';this.echoPads(false);this.ambient.setGame(null);text('echo-status','一時停止中 · 再開すると同じ順番をもう一度再生');text('echo-start','再開 ↗');$('echo-start').disabled=false;$('echo-pause').disabled=true;}
+ pauseEcho(){if(!['listen','input'].includes(this.echo.phase))return;this.clearEcho();this.echo.phase='paused';this.echoPads(false);text('echo-status','一時停止中 · 再開すると同じ順番をもう一度再生');text('echo-start','再開 ↗');$('echo-start').disabled=false;$('echo-pause').disabled=true;}
  initMatch(){
   this.match=newMatch(seed());this.matchSelected=null;this.matchBusy=false;const board=$('match-board');
   for(let i=0;i<49;i++){const button=document.createElement('button');button.className='match-coin';button.dataset.index=i;button.addEventListener('click',()=>this.selectMatch(i));button.addEventListener('keydown',e=>{const d={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(d){e.preventDefault();const n=i+d;if(adjacent(i,n))board.children[n].focus();}});board.append(button);}

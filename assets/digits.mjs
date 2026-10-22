@@ -1,8 +1,9 @@
 // Only animate received values; no simulated market ticks.
 export class FlipNumber {
- constructor(element){this.element=element;this.previous='';this.value=null;this.reduced=matchMedia('(prefers-reduced-motion: reduce)');}
+ constructor(element){this.element=element;this.previous='';this.value=null;this.reduced=matchMedia('(prefers-reduced-motion: reduce)');if(element.closest('.rate')){this.resize=new ResizeObserver(()=>this.fit());this.resize.observe(element.closest('.rate'));}}
+ fit(){const e=this.element;if(!e.closest('.rate')||!e.clientWidth)return;const base=parseFloat(getComputedStyle(e).getPropertyValue('--rate-font'))||32;e.style.fontSize=base+'px';if(e.scrollWidth>e.clientWidth)e.style.fontSize=Math.max(16,Math.floor(base*(e.clientWidth-3)/e.scrollWidth))+'px';}
  set(label,value){if(label===this.previous)return;const e=this.element,old=this.previous,up=value>=this.value;e.setAttribute('aria-label',label);e.dataset.direction=up?'up':'down';e.classList.toggle('long-number',label.length>12);const fragment=document.createDocumentFragment();
   for(let i=0;i<label.length;i++){const ch=label[i],cell=document.createElement('span');cell.className=/\d/.test(ch)?'digit':'digit punctuation';cell.setAttribute('aria-hidden','true');const face=document.createElement('span');face.textContent=ch;cell.append(face);const before=old[old.length-label.length+i];if(old&&before!==ch&&/\d/.test(ch)&&!this.reduced.matches){const ghost=document.createElement('span');ghost.className='digit-old';ghost.textContent=before;cell.append(ghost);ghost.animate([{transform:'translateY(0)'},{transform:`translateY(${up?'-':''}105%)`}],{duration:420,delay:i*12,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});face.animate([{transform:`translateY(${up?'':'-'}105%)`,opacity:1},{transform:'translateY(0)',opacity:1}],{duration:420,delay:i*12,easing:'cubic-bezier(.2,.8,.2,1)'});}fragment.append(cell);}
-  e.replaceChildren(fragment);this.previous=label;this.value=value;
+  e.replaceChildren(fragment);this.previous=label;this.value=value;this.fit();
  }
 }
