@@ -64,3 +64,11 @@ body.zen-mode .hero-content{visibility:visible;position:static;margin:0}body.zen
 
 /* Silent header: the viewing control follows the brand. */
 .masthead #zen{margin-left:auto}
+
+/* Give the BTC equivalent a full-width result above the other currencies. */
+.converter>.rate-btc{grid-column:1/-1;grid-row:3;width:100%;padding:16px 20px;border:1px solid #f6af723b;border-radius:8px;background:linear-gradient(115deg,#f6af7212,#f6af7203);min-height:112px;text-align:left}
+.converter>.rate-grid{grid-row:4}
+.rate-btc .coin.btc{color:var(--orange);background:#f6af721a;border-color:#f6af7230}
+.rate-btc small{color:#f6d5ad;font-size:13px}
+.rate-btc strong,.rate-btc strong.long-number{--rate-font:44;font-size:44px;color:#ffe0b9}
+@media(max-width:640px){.converter>.rate-btc{padding:14px 12px;min-height:108px}.rate-btc strong,.rate-btc strong.long-number{--rate-font:36;font-size:36px}}

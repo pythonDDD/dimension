@@ -14,8 +14,8 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; frame-src 'none'; media-src 'none'; connect-src 'self' wss://ws-feed.exchange.coinbase.com https://mempool.space wss://mempool.space https://api.exchange.coinbase.com https://api.coinbase.com; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>DIMENSION — Bitcoin, in orbit.</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/style.css?v=6.0.1">
-<script type="module" src="assets/app.mjs?v=6.0.1"></script>
+<link rel="stylesheet" href="assets/style.css?v=6.0.2">
+<script type="module" src="assets/app.mjs?v=6.0.2"></script>
 </head>
 <body>
 <svg class="icon-defs" aria-hidden="true"><defs>
@@ -38,9 +38,11 @@
 <section id="converter" class="converter" aria-labelledby="converter-title">
 <div class="section-kicker"><h1 id="converter-title">SATOSHI CONVERTER</h1><span class="converter-live" id="converter-live">CONNECTING</span></div>
 <div class="converter-entry"><div class="amount-line"><input id="convert-amount" type="text" inputmode="decimal" value="1" maxlength="24" aria-label="換算する金額"><label class="sr-only" for="convert-currency">換算元の通貨</label><select id="convert-currency"><option value="SAT">sat</option><option value="BTC">BTC</option><option value="JPY">JPY</option><option value="USD">USD</option><option value="STX">STX</option><option value="GMT">GMT</option><option value="SOL">SOL</option><option value="ETH">ETH</option></select></div>
-<div class="converter-tools"><p id="btc-equivalent">= 0.00000001 BTC</p><div class="presets" aria-label="Satoshi 金額を入力"><button data-amount="1">1 sat</button><button data-amount="1000">1k</button><button data-amount="100000">100k</button></div></div>
+<div class="converter-tools"><div class="presets" aria-label="Satoshi 金額を入力"><button data-amount="1">1 sat</button><button data-amount="1000">1k</button><button data-amount="100000">100k</button></div></div>
 <p id="convert-error" class="input-error" role="status"></p>
-</div><div class="rate-grid">
+</div>
+<button class="rate rate-btc" data-copy-rate="BTC" aria-label="Bitcoin の換算額をコピー"><span class="coin btc">₿</span><span><small>Bitcoin <em>BTC</em></small><strong id="rate-BTC" class="rolling-number">—</strong><span class="rate-source" id="source-BTC">—</span></span></button>
+<div class="rate-grid">
 <button class="rate" data-copy-rate="JPY" aria-label="日本円の換算額をコピー"><span class="coin fiat">¥</span><span><small>日本円 <em>JPY</em></small><strong id="rate-JPY" class="rolling-number">—</strong><span class="rate-source" id="source-JPY">—</span></span></button>
 <button class="rate" data-copy-rate="USD" aria-label="米ドルの換算額をコピー"><span class="coin fiat">$</span><span><small>米ドル <em>USD</em></small><strong id="rate-USD" class="rolling-number">—</strong><span class="rate-source" id="source-USD">—</span></span></button>
 <button class="rate" data-copy-rate="STX" aria-label="Stacks の換算額をコピー"><span class="coin stx">Ӿ</span><span><small>Stacks <em>STX</em></small><strong id="rate-STX" class="rolling-number">—</strong><span class="rate-source" id="source-STX">—</span></span></button>
