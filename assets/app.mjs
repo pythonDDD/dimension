@@ -1,5 +1,5 @@
 import {MarketChart} from './market-chart.mjs?v=6.0.0';
-import {MempoolView} from './mempool-view.mjs?v=6.0.0';
+import {MempoolView} from './mempool-view.mjs?v=6.0.1';
 import {FlipNumber} from './digits.mjs?v=6.0.0';
 import {sha256} from './hash.mjs?v=6.0.0';
 import {Cosmos} from './cosmos.mjs?v=6.0.0';
