@@ -1,15 +1,16 @@
-import {newEcho,nextEcho,echoInput,newMerge,playMerge,newMatch,playMatch,matchMoves,adjacent,newBreaker,launchBreaker,stepBreaker} from './games.mjs?v=4.0.0';
+import {BitcoinTetris} from './tetris-view.mjs?v=5.0.0';
+import {newEcho,nextEcho,echoInput,newMatch,playMatch,matchMoves,adjacent,newBreaker,launchBreaker,stepBreaker} from './games.mjs?v=5.0.0';
 const $=id=>document.getElementById(id),text=(id,value)=>$(id).textContent=value,seed=()=>Math.floor(Math.random()*4294967295);
 const ICONS=['₿','◇','≋','Ӿ','G'],NAMES=['Bitcoin','Ethereum','Solana','Stacks','GMT'];
 export class Arcade {
  constructor({ambient,celebrate=()=>{}}){
   this.ambient=ambient;this.celebrate=celebrate;this.best={};this.echoTimers=new Set();this.matchEpoch=0;this.breakerKeys=new Set();
-  try{const old=JSON.parse(localStorage.getItem('dimension-arcade-v3')||'{}');const current=JSON.parse(localStorage.getItem('dimension-arcade-v4')||'{}');for(const key of ['echo','merge','breaker','match']){const value=Number(current[key]??(key==='echo'?old.echo:0));this.best[key]=Number.isFinite(value)&&value>=0?value:0;}}catch{}
-  for(const kind of ['echo','merge','breaker','match'])this.score(kind,0);
-  this.initEcho();this.initMerge();this.initBreaker();this.initMatch();
+  try{const old=JSON.parse(localStorage.getItem('dimension-arcade-v3')||'{}');const current=JSON.parse(localStorage.getItem('dimension-arcade-v4')||'{}');for(const key of ['echo','blocks','breaker','match']){const value=Number(current[key]??(key==='echo'?old.echo:0));this.best[key]=Number.isFinite(value)&&value>=0?value:0;}}catch{}
+  for(const kind of ['echo','blocks','breaker','match'])this.score(kind,0);
+  this.initEcho();this.tetris=new BitcoinTetris({score:(kind,value)=>this.score(kind,value),celebrate:this.celebrate});this.initBreaker();this.initMatch();
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.pause();});window.addEventListener('blur',()=>this.pause());
-  this.observer=new IntersectionObserver(entries=>{for(const entry of entries)if(!entry.isIntersecting){if(entry.target.id==='echo-card')this.pauseEcho();if(entry.target.id==='breaker-card')this.pauseBreaker();}},{threshold:.08});
-  this.observer.observe($('echo-card'));this.observer.observe($('breaker-card'));
+  this.observer=new IntersectionObserver(entries=>{for(const entry of entries)if(!entry.isIntersecting){if(entry.target.id==='echo-card')this.pauseEcho();if(entry.target.id==='breaker-card')this.pauseBreaker();if(entry.target.id==='blocks-card')this.tetris.pause();}},{threshold:.08});
+  this.observer.observe($('echo-card'));this.observer.observe($('breaker-card'));this.observer.observe($('blocks-card'));
  }
  score(kind,value){text(`${kind}-score`,value.toLocaleString());if(value>(this.best[kind]||0)){this.best[kind]=value;try{localStorage.setItem('dimension-arcade-v4',JSON.stringify(this.best));}catch{}}text(`${kind}-best`,`BEST ${(this.best[kind]||0).toLocaleString()}`);}
  later(fn,ms){const id=setTimeout(()=>{this.echoTimers.delete(id);fn();},ms);this.echoTimers.add(id);return id;}
@@ -32,15 +33,6 @@ export class Arcade {
   this.score('echo',this.echo.score);if(result==='complete'){this.echoPads(false);this.ambient.setGame(null);$('echo-start').disabled=false;$('echo-pause').disabled=true;text('echo-start',this.echo.round===12?'もう一度 ↗':'次のラウンド ↗');text('echo-status',this.echo.round===12?'PERFECT HASH · 全12ラウンドクリア！':`ROUND ${this.echo.round} CLEAR · +${this.echo.round*100}`);if(this.echo.round===12)this.celebrate();}else text('echo-status',`あなたの番 · ${this.echo.position} / ${this.echo.sequence.length}`);
  }
  pauseEcho(){if(!['listen','input'].includes(this.echo.phase))return;this.clearEcho();this.echo.phase='paused';this.echoPads(false);this.ambient.setGame(null);text('echo-status','一時停止中 · 再開すると同じ順番をもう一度再生');text('echo-start','再開 ↗');$('echo-start').disabled=false;$('echo-pause').disabled=true;}
- initMerge(){
-  this.merge=newMerge(seed());this.renderMerge();$('merge-reset').addEventListener('click',()=>{this.merge=newMerge(seed());this.renderMerge();text('merge-status','新しい盤面。2048を目指そう。');});
-  document.querySelectorAll('[data-merge]').forEach(b=>b.addEventListener('click',()=>{this.moveMerge(b.dataset.merge);$('merge-board').focus({preventScroll:true});}));
-  $('merge-board').addEventListener('keydown',e=>{const d={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'}[e.key];if(d){e.preventDefault();this.moveMerge(d);}});
-  let point=null;const board=$('merge-board');board.addEventListener('pointerdown',e=>{point={x:e.clientX,y:e.clientY};board.setPointerCapture(e.pointerId);board.focus({preventScroll:true});});board.addEventListener('pointerup',e=>{if(!point)return;const dx=e.clientX-point.x,dy=e.clientY-point.y;point=null;if(Math.hypot(dx,dy)<18)return;this.moveMerge(Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up');});board.addEventListener('pointercancel',()=>point=null);
-  $('merge-undo').addEventListener('click',()=>{if(!this.merge.undo)return;Object.assign(this.merge,this.merge.undo,{undo:null,over:false});this.renderMerge();text('merge-status','1手戻しました。');});
- }
- renderMerge(result){const board=$('merge-board');board.replaceChildren(...this.merge.board.map((value,i)=>{const tile=document.createElement('div');tile.className='merge-tile';tile.dataset.power=String(Math.min(11,Math.log2(value)||0));tile.setAttribute('aria-label',value?`${value} sats`:'空き');if(value){tile.append(document.createTextNode(value));const unit=document.createElement('small');unit.textContent='SATS';tile.append(unit);}if(result?.merged.includes(i))tile.classList.add('pop');if(result?.added===i)tile.classList.add('spawn');return tile;}));this.score('merge',this.merge.score);$('merge-undo').disabled=!this.merge.undo;}
- moveMerge(direction){if(this.merge.over)return;const result=playMerge(this.merge,direction);if(!result){text('merge-status','この方向には動かせません。');return;}this.renderMerge(result);const max=Math.max(...this.merge.board);text('merge-status',this.merge.over?'盤面がいっぱい。1手戻すか、もう一度。':max>=2048?`${max.toLocaleString()} SATS · このまま上を目指せる。`:result.score?`+${result.score} · 最大 ${max.toLocaleString()} SATS`:'次は、どこに重ねる？');}
  initMatch(){
   this.match=newMatch(seed());this.matchSelected=null;this.matchBusy=false;const board=$('match-board');
   for(let i=0;i<49;i++){const button=document.createElement('button');button.className='match-coin';button.dataset.index=i;button.addEventListener('click',()=>this.selectMatch(i));button.addEventListener('keydown',e=>{const d={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(d){e.preventDefault();const n=i+d;if(adjacent(i,n))board.children[n].focus();}});board.append(button);}
@@ -74,6 +66,6 @@ export class Arcade {
   for(const p of this.breakerParticles){c.globalAlpha=p.life;c.fillStyle=colors[p.color];c.fillRect(p.x*w,p.y*h,w*.004,w*.004);}c.globalAlpha=1;
   const half=s.wide>0?.115:.082;c.shadowBlur=14;c.shadowColor='#f6af7255';c.fillStyle=s.wide>0?'#8cd6be':'#edc7a1';c.beginPath();c.roundRect((s.paddle-half)*w,.895*h,half*2*w,.014*h,4);c.fill();c.shadowBlur=0;c.fillStyle='#f8e3cb';c.shadowBlur=12;c.shadowColor='#f6af7266';c.beginPath();c.ellipse(s.ball.x*w,s.ball.y*h,.012*w,.012*h,0,0,Math.PI*2);c.fill();c.shadowBlur=0;
  }
- pause(){this.pauseEcho();this.pauseBreaker();}
- destroy(){this.pause();this.clearEcho();this.observer.disconnect();this.resizeObserver.disconnect();this.matchEpoch++;}
+ pause(){this.pauseEcho();this.pauseBreaker();this.tetris?.pause();}
+ destroy(){this.tetris.destroy();this.pause();this.clearEcho();this.observer.disconnect();this.resizeObserver.disconnect();this.matchEpoch++;}
 }

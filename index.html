@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#080b12">
-<meta name="description" content="Bitcoin、アンビエント、宇宙。Satoshiコンバーター、ライブブロック、4つのゲームをひとつの画面で。">
+<meta name="description" content="Bitcoin、音楽、宇宙。Satoshiコンバーター、ライブブロック、4つのゲームをひとつの画面で。">
 <meta property="og:title" content="DIMENSION — Bitcoin, in orbit.">
-<meta property="og:description" content="Satoshi converter · Ambient radio · Live Bitcoin · Four games">
+<meta property="og:description" content="Satoshi converter · NCS radio · Live Bitcoin · Four games">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pythonddd.github.io/dimension/">
 <meta property="og:image" content="https://pythonddd.github.io/dimension/assets/social-card.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://mempool.space wss://mempool.space https://api.exchange.coinbase.com https://api.coinbase.com; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://w.soundcloud.com; style-src 'self'; img-src 'self' data: blob:; frame-src https://w.soundcloud.com; media-src 'self' blob:; connect-src 'self' wss://ws-feed.exchange.coinbase.com https://mempool.space wss://mempool.space https://api.exchange.coinbase.com https://api.coinbase.com; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>DIMENSION — Bitcoin, in orbit.</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/style.css?v=4.0.0">
-<script type="module" src="assets/app.mjs?v=4.0.0"></script>
+<link rel="stylesheet" href="assets/style.css?v=5.0.0">
+<script type="module" src="assets/app.mjs?v=5.0.0"></script>
 </head>
 <body>
 <svg class="icon-defs" aria-hidden="true"><defs>
@@ -31,35 +31,39 @@
 <div class="radio" aria-label="音楽プレーヤー">
 <button id="audio-toggle" class="audio-button" aria-pressed="false"><span id="audio-symbol">▶</span><span id="audio-label">音楽を再生</span></button>
 <span class="radio-divider"></span>
-<label class="sr-only" for="music-mode">音楽</label><select id="music-mode"><option value="ambient">DEEP ORBIT · Ambient</option><option value="jazz">BLUE HOUR · Jazzy</option></select>
+<label class="sr-only" for="music-mode">音楽</label><select id="music-mode"><option value="ncs">RECALL · gabriawll / NCS</option><option value="local">手元の音声ファイル</option></select>
 <label class="volume-label"><span>VOL</span><input id="volume" type="range" min="0" max="80" value="48" aria-label="音量"></label>
-<div class="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<button id="music-details" class="music-details" aria-label="音楽プレーヤーを表示" aria-expanded="false">♫</button><div class="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 </div>
 <button id="zen" class="icon-button" aria-label="宇宙だけを眺める" aria-pressed="false"><svg><use href="#i-expand"/></svg></button>
 </header>
+<section id="music-panel" class="music-panel" aria-label="音楽プレーヤー" hidden>
+<div class="music-info"><span class="eyebrow">NOW PLAYING</span><strong id="track-title">Recall — gabriawll</strong><p>Music provided by NoCopyrightSounds<br><a href="https://ncs.io/Recall" target="_blank" rel="noopener noreferrer">NCS / 楽曲・クレジット ↗</a></p><label class="file-pick">手元の音声で聴く<input id="music-file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg"></label><small>ファイルは端末内だけで再生</small></div>
+<div class="music-embed"><iframe id="ncs-player" title="NCS公式 — gabriawll / Recall" allow="autoplay" referrerpolicy="strict-origin-when-cross-origin"></iframe><audio id="local-player" controls loop preload="metadata" hidden></audio><p id="music-status" role="status">▶ で公式プレーヤーを読み込み</p></div>
+<button id="music-close" class="icon-button" aria-label="音楽を停止してプレーヤーを閉じる">×</button>
+</section>
 <main>
 <section class="hero" aria-label="Bitcoin の宇宙とコンバーター">
-<div id="universe" aria-hidden="true"><canvas id="space"></canvas><canvas id="particles"></canvas></div><div class="hero-shade" aria-hidden="true"></div>
-<div class="hero-top"><span class="eyebrow"><span class="dot"></span> BITCOIN / IN ORBIT</span><div class="market"><span>BTC / USD</span><strong id="btc-price">—</strong><small id="btc-change">取得中</small></div></div>
+
+<div class="hero-top"><span class="eyebrow"><span class="dot"></span> BITCOIN / EVENT HORIZON</span><div class="market"><span>BTC / USD</span><strong id="btc-price">—</strong><small id="btc-change">取得中</small></div></div>
 <div class="hero-content">
 <section id="converter" class="converter" aria-labelledby="converter-title">
-<div class="section-kicker"><h1 id="converter-title">SATOSHI CONVERTER</h1><span>01 / ∞</span></div>
-<div class="amount-line"><input id="convert-amount" type="text" inputmode="decimal" value="1" maxlength="24" aria-label="換算する金額"><label class="sr-only" for="convert-currency">換算元の通貨</label><select id="convert-currency"><option value="SAT">sat</option><option value="BTC">BTC</option><option value="JPY">JPY</option><option value="USD">USD</option><option value="STX">STX</option><option value="GMT">GMT</option><option value="SOL">SOL</option><option value="ETH">ETH</option></select></div>
+<div class="section-kicker"><h1 id="converter-title">SATOSHI CONVERTER</h1><span class="converter-live" id="converter-live">CONNECTING</span></div>
+<div class="converter-entry"><div class="amount-line"><input id="convert-amount" type="text" inputmode="decimal" value="1" maxlength="24" aria-label="換算する金額"><label class="sr-only" for="convert-currency">換算元の通貨</label><select id="convert-currency"><option value="SAT">sat</option><option value="BTC">BTC</option><option value="JPY">JPY</option><option value="USD">USD</option><option value="STX">STX</option><option value="GMT">GMT</option><option value="SOL">SOL</option><option value="ETH">ETH</option></select></div>
 <div class="converter-tools"><p id="btc-equivalent">= 0.00000001 BTC</p><div class="presets" aria-label="Satoshi 金額を入力"><button data-amount="1">1 sat</button><button data-amount="1000">1k</button><button data-amount="100000">100k</button></div></div>
 <p id="convert-error" class="input-error" role="status"></p>
-<div class="rate-grid">
-<button class="rate" data-copy-rate="JPY" aria-label="日本円の換算額をコピー"><span class="coin fiat">¥</span><span><small>日本円 <em>JPY</em></small><strong id="rate-JPY">—</strong></span></button>
-<button class="rate" data-copy-rate="USD" aria-label="米ドルの換算額をコピー"><span class="coin fiat">$</span><span><small>米ドル <em>USD</em></small><strong id="rate-USD">—</strong></span></button>
-<button class="rate" data-copy-rate="STX" aria-label="Stacks の換算額をコピー"><span class="coin stx">Ӿ</span><span><small>Stacks <em>STX</em></small><strong id="rate-STX">—</strong></span></button>
-<button class="rate" data-copy-rate="GMT" aria-label="GMT の換算額をコピー"><span class="coin gmt">G</span><span><small>STEPN <em>GMT</em></small><strong id="rate-GMT">—</strong></span></button>
-<button class="rate" data-copy-rate="SOL" aria-label="Solana の換算額をコピー"><span class="coin sol">≋</span><span><small>Solana <em>SOL</em></small><strong id="rate-SOL">—</strong></span></button>
-<button class="rate" data-copy-rate="ETH" aria-label="Ethereum の換算額をコピー"><span class="coin eth">◇</span><span><small>Ethereum <em>ETH</em></small><strong id="rate-ETH">—</strong></span></button>
+</div><div class="rate-grid">
+<button class="rate" data-copy-rate="JPY" aria-label="日本円の換算額をコピー"><span class="coin fiat">¥</span><span><small>日本円 <em>JPY</em></small><strong id="rate-JPY" class="rolling-number">—</strong><span class="rate-source" id="source-JPY">—</span></span></button>
+<button class="rate" data-copy-rate="USD" aria-label="米ドルの換算額をコピー"><span class="coin fiat">$</span><span><small>米ドル <em>USD</em></small><strong id="rate-USD" class="rolling-number">—</strong><span class="rate-source" id="source-USD">—</span></span></button>
+<button class="rate" data-copy-rate="STX" aria-label="Stacks の換算額をコピー"><span class="coin stx">Ӿ</span><span><small>Stacks <em>STX</em></small><strong id="rate-STX" class="rolling-number">—</strong><span class="rate-source" id="source-STX">—</span></span></button>
+<button class="rate" data-copy-rate="GMT" aria-label="GMT の換算額をコピー"><span class="coin gmt">G</span><span><small>STEPN <em>GMT</em></small><strong id="rate-GMT" class="rolling-number">—</strong><span class="rate-source" id="source-GMT">—</span></span></button>
+<button class="rate" data-copy-rate="SOL" aria-label="Solana の換算額をコピー"><span class="coin sol">≋</span><span><small>Solana <em>SOL</em></small><strong id="rate-SOL" class="rolling-number">—</strong><span class="rate-source" id="source-SOL">—</span></span></button>
+<button class="rate" data-copy-rate="ETH" aria-label="Ethereum の換算額をコピー"><span class="coin eth">◇</span><span><small>Ethereum <em>ETH</em></small><strong id="rate-ETH" class="rolling-number">—</strong><span class="rate-source" id="source-ETH">—</span></span></button>
 </div>
 <div class="rate-footer"><span id="rate-status">レートを取得中…</span><button id="refresh-rates" class="text-button" aria-label="レートを更新">↻ 更新</button></div>
-<p class="fineprint">Coinbase 参考レート · 数値を押すとコピー</p>
+<p class="fineprint converter-note">Coinbase 約定・参考レート · 円はUSD/JPYの60秒更新値で換算 · 数値を押すとコピー</p>
 </section>
-<div class="orbit-space">
-<div class="orbit-coordinate"><span>₿</span><small>21,000,000 BTC</small></div>
+<div class="orbit-space"><div id="universe" aria-hidden="true"><canvas id="space"></canvas><canvas id="particles"></canvas></div><div class="hero-shade" aria-hidden="true"></div><div class="scene-label"><span>01 / EVENT HORIZON</span></div>
 <div class="orbit-block"><span class="eyebrow">LATEST BLOCK</span><strong id="orbit-height"># —</strong><span id="orbit-time">ネットワークに接続中</span></div>
 <div class="cosmic-controls"><button id="warp" class="warp-button"><svg><use href="#i-spark"/></svg> WARP</button><label>DRIFT<input id="drift" type="range" min="0" max="100" value="65" aria-label="浮遊の強さ"></label><button id="motion" class="icon-button" aria-label="宇宙の動きを止める" aria-pressed="false">Ⅱ</button><button id="capture" class="icon-button" aria-label="宇宙を画像で保存"><svg><use href="#i-camera"/></svg></button></div>
 </div>
@@ -75,11 +79,16 @@
 <section class="arcade-section" aria-labelledby="arcade-title"><div class="arcade-heading"><div><span class="eyebrow">ARCADE / 04 GAMES</span><h2 id="arcade-title">Play in orbit<span class="orange">.</span></h2></div><div class="arcade-note"><label><input id="game-sound" type="checkbox" checked> Hash Echo の音</label><span>スコアはこの端末に保存 · ゲーム内ポイント</span></div></div>
 <div class="game-grid">
 <article class="game-card echo-card" id="echo-card" aria-labelledby="echo-title"><div class="game-heading"><div><span class="game-number">01 / MEMORY</span><h3 id="echo-title">Hash Echo</h3></div><div class="score"><small>SCORE <span id="echo-best">BEST 0</span></small><strong id="echo-score">0</strong></div></div><p class="game-instruction">光った順番を、そのまま。<kbd>1</kbd>〜<kbd>4</kbd>でも操作。</p><div class="echo-board" id="echo-board" tabindex="0" aria-label="Hash Echo 操作盤"><button class="echo-pad" data-pad="0" aria-label="1 Bitcoin" disabled><span>₿</span><small>01</small></button><button class="echo-pad" data-pad="1" aria-label="2 Lightning" disabled><span>ϟ</span><small>02</small></button><button class="echo-pad" data-pad="2" aria-label="3 Diamond" disabled><span>◇</span><small>03</small></button><button class="echo-pad" data-pad="3" aria-label="4 Infinity" disabled><span>∞</span><small>04</small></button><span class="echo-center" id="echo-round">01</span></div><div class="game-status" id="echo-status" role="status">12ラウンド。どこまで覚えられる？</div><div class="game-footer"><button id="echo-start" class="primary-button">スタート <span>↗</span></button><button id="echo-pause" class="secondary-button" disabled>一時停止</button><button id="echo-reset" class="text-button">リセット</button></div></article>
-<article class="game-card merge-card" id="merge-card" aria-labelledby="merge-title"><div class="game-heading"><div><span class="game-number">02 / MERGE</span><h3 id="merge-title">Sats Merge</h3></div><div class="score"><small>SCORE <span id="merge-best">BEST 0</span></small><strong id="merge-score">0</strong></div></div><p class="game-instruction">同じ数字を重ねて、2048へ。スワイプ / <kbd>↑↓←→</kbd></p><div id="merge-board" class="merge-board" tabindex="0" role="group" aria-label="Sats Merge 4 × 4 盤面。矢印キーまたはスワイプで移動"></div><div id="merge-status" class="game-status" role="status">まずは、どちらかにスワイプ。</div><div class="game-footer"><div class="direction-buttons" aria-label="タイルを動かす"><button data-merge="left" aria-label="左へ">←</button><button data-merge="up" aria-label="上へ">↑</button><button data-merge="down" aria-label="下へ">↓</button><button data-merge="right" aria-label="右へ">→</button></div><button id="merge-undo" class="text-button" disabled>1手戻す</button><button id="merge-reset" class="text-button">リセット</button></div></article>
+<article class="game-card blocks-card" id="blocks-card" aria-labelledby="blocks-title">
+<div class="game-heading"><div><span class="game-number">02 / FALLING BLOCKS</span><h3 id="blocks-title">Bitcoin Tetris</h3></div><div class="score"><small>SCORE <span id="blocks-best">BEST 0</span></small><strong id="blocks-score">0</strong></div></div>
+<p class="game-instruction"><kbd>← →</kbd> 移動 · <kbd>↑</kbd> 回転 · <kbd>Space</kbd> 即落下 · <kbd>C</kbd> ホールド</p>
+<div class="blocks-stage"><div class="blocks-well"><canvas id="blocks-canvas" width="300" height="600" tabindex="0" aria-label="Bitcoin Tetris 10列20行の盤面。矢印で移動、上で回転、スペースで即落下、Cでホールド、Pで一時停止"></canvas><div id="blocks-overlay" class="blocks-overlay"><strong>₿</strong><span>STACK. CLEAR. REPEAT.</span></div></div><aside class="blocks-side"><span>HOLD</span><canvas id="blocks-held" width="90" height="62" aria-label="ホールド中のブロック"></canvas><span>NEXT</span><canvas id="blocks-next" width="90" height="195" aria-label="次の3ブロック"></canvas><div><span>LINES</span><strong id="blocks-lines">00</strong></div><div><span>LEVEL</span><strong id="blocks-level">01</strong></div></aside></div>
+<div class="blocks-controls" aria-label="テトリスの操作"><button data-blocks="left" aria-label="左へ">←</button><button data-blocks="rotate" aria-label="右回転">↻</button><button data-blocks="right" aria-label="右へ">→</button><button data-blocks="down" aria-label="下へ">↓</button><button data-blocks="drop" aria-label="即落下">⇓ DROP</button><button data-blocks="hold" id="blocks-hold" aria-label="ホールド">HOLD</button></div>
+<div id="blocks-status" class="game-status" role="status">横一列を埋めて消す。4列同時消しで大きく加点。</div><div class="game-footer"><button id="blocks-start" class="primary-button">スタート ↗</button><button id="blocks-pause" class="secondary-button" disabled>一時停止</button><button id="blocks-reset" class="text-button">リセット</button></div></article>
 <article class="game-card breaker-card" id="breaker-card" aria-labelledby="breaker-title"><div class="game-heading"><div><span class="game-number">03 / BREAKOUT</span><h3 id="breaker-title">Block Breaker</h3></div><div class="score"><small>SCORE <span id="breaker-best">BEST 0</span></small><strong id="breaker-score">0</strong></div></div><p class="game-instruction">パドルで跳ね返してブロックを壊す。ドラッグ / <kbd>← →</kbd></p><div class="breaker-stage"><canvas id="breaker-canvas" width="840" height="600" tabindex="0" aria-label="Block Breaker。左右キーかドラッグでパドル操作、スペースで発射または一時停止"></canvas><div class="breaker-readout"><span id="breaker-level">LEVEL 01</span><span id="breaker-lives" aria-label="残り3ライフ">● ● ●</span></div><div id="breaker-overlay" class="breaker-overlay"><span>BREAK THE BLOCK.</span><small>下のボタンで発射</small></div></div><div id="breaker-status" class="game-status" role="status">6連続ヒットでパドルがワイドに。</div><div class="game-footer"><button id="breaker-start" class="primary-button">ボールを発射 <span>↗</span></button><button id="breaker-pause" class="secondary-button" disabled>一時停止</button><button id="breaker-reset" class="text-button">リセット</button></div></article>
 <article class="game-card match-card" id="match-card" aria-labelledby="match-title"><div class="game-heading"><div><span class="game-number">04 / MATCH 3</span><h3 id="match-title">Chain Match</h3></div><div class="score"><small>SCORE <span id="match-best">BEST 0</span></small><strong id="match-score">0</strong></div></div><p class="game-instruction">隣同士を入れ替えて3つ揃える。連鎖でスコアアップ。</p><div id="match-board" class="match-board" role="group" aria-label="Chain Match 7 × 7 盤面"></div><div id="match-status" class="game-status" role="status">残り20手。2つのコインを選んで交換。</div><div class="game-footer"><button id="match-hint" class="secondary-button">ヒント <span>✧</span></button><span id="match-moves" class="moves-count">20 MOVES</span><button id="match-reset" class="text-button">リセット</button></div></article>
 </div></section>
-<footer class="footer"><a class="brand" href="./"><svg><use href="#i-orbit"/></svg><span>DIMENSION<span class="orange">.</span></span></a><span>BITCOIN · AMBIENT · ARCADE</span><div><span id="render-status">COSMIC ENGINE</span><a href="https://github.com/pythonDDD/dimension" target="_blank" rel="noopener noreferrer">SOURCE ↗</a></div></footer>
+<footer class="footer"><a class="brand" href="./"><svg><use href="#i-orbit"/></svg><span>DIMENSION<span class="orange">.</span></span></a><span>BITCOIN · MUSIC · ARCADE</span><div><span id="render-status">COSMIC ENGINE</span><a href="https://github.com/pythonDDD/dimension" target="_blank" rel="noopener noreferrer">SOURCE ↗</a></div></footer>
 </div>
 </main>
 <button id="zen-exit" class="zen-exit" hidden>眺めるモードを終了 <span>Esc</span></button>
