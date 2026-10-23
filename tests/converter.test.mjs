@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {parseRates,convert,formatValue,RateFeed} from '../assets/converter.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {parseRates,convert,formatValue,formatRolling,RateFeed} from '../assets/converter.mjs';
 const payload={data:{currency:'BTC',rates:{USD:'80000',JPY:'12000000',STX:'200000',GMT:'10000000',SOL:'800',ETH:'32'}}};
 test('Every requested currency converts in both directions without rounding tiny amounts to zero',()=>{const r=parseRates(payload);const expected={JPY:.12,USD:.0008,STX:.002,GMT:.1,SOL:.000008,ETH:.00000032};for(const[key,n]of Object.entries(expected)){assert(Math.abs(convert(1,'SAT',key,r)-n)<n*1e-12);assert(Math.abs(convert(n,key,'SAT',r)-1)<1e-12);assert.notEqual(formatValue(n),'0');}assert.equal(convert(100000000,'SAT','BTC',r),1);assert.equal(convert(1,'BTC','SAT',r),1e8);});
 test('Missing or invalid quotes and invalid input never produce fictitious prices',()=>{const r=parseRates({data:{currency:'BTC',rates:{USD:80000,JPY:12000000,STX:0,GMT:'oops'}}});assert.equal(convert(1,'SAT','STX',r),null);assert.equal(convert(-1,'SAT','JPY',r),null);assert.equal(convert(Infinity,'SAT','JPY',r),null);assert.throws(()=>parseRates({data:{currency:'USD',rates:{}}}));assert.equal(formatValue(null),'—');});
@@ -9,3 +9,11 @@ test('Out-of-order, invalid, stale and future ticker messages never replace vali
 test('Rolling digits keep trailing zeros so live ticks do not shift the decimal columns',async()=>{const {formatRolling}=await import('../assets/converter.mjs');assert.equal(formatRolling(.0008415),'0.000841500');assert.equal(formatRolling(.000841501).length,formatRolling(.0008415).length);assert.equal(formatRolling(null),'—');assert.match(formatRolling(1e18),/e\+18/);});
 
 test('Sub-satoshi input values remain visible rather than rounding to a false zero',async()=>{const {formatRolling}=await import('../assets/converter.mjs');assert.equal(Number(formatValue(1e-18)),1e-18);assert.equal(Number(formatRolling(1e-18)),1e-18);});
+
+
+test('BTC display and copied amounts use eight decimals, rounded to the nearest satoshi',()=>{
+ const cases=[[0,'0.00000000'],[1e-8,'0.00000001'],[.0000122985,'0.00001230'],[.0000122949,'0.00001229'],[.999999999,'1.00000000'],[1,'1.00000000'],[4e-9,'0.00000000'],[null,'—'],[NaN,'—']];
+ for(const [value,expected] of cases){assert.equal(formatRolling(value,'BTC'),expected);assert.equal(formatValue(value,'BTC'),expected);}
+ assert.equal(formatRolling(convert(100000000,'SAT','BTC',parseRates(payload)),'BTC'),'1.00000000');
+ assert.equal(formatRolling(1e18,'BTC'),'1.00000000e+18');
+});

@@ -4,7 +4,7 @@ import {FlipNumber} from './digits.mjs?v=6.0.0';
 import {sha256} from './hash.mjs?v=6.0.0';
 import {Cosmos} from './cosmos.mjs?v=6.0.0';
 import {DataFeed,isStale} from './data.mjs?v=6.0.0';
-import {RateFeed,convert,formatValue,formatRolling} from './converter.mjs?v=6.0.0';
+import {RateFeed,convert,formatValue,formatRolling} from './converter.mjs?v=6.0.3';
 import {Arcade} from './arcade.mjs?v=6.0.0';
 const $=id=>document.getElementById(id),text=(id,value)=>$(id).textContent=value;
 let toastTimer;function toast(message){text('toast',message);$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000);}
@@ -26,7 +26,7 @@ const amountMeasure=document.createElement('canvas').getContext('2d');let measur
 function fitAmount(){const input=$('convert-amount'),raw=input.value||'0',width=input.clientWidth;if(!width||(measuredInput===raw&&measuredWidth===width))return;measuredInput=raw;measuredWidth=width;const style=getComputedStyle(input),base=Number.parseFloat(style.getPropertyValue('--amount-font'))||64;amountMeasure.font=`${style.fontWeight} ${base}px ${style.fontFamily}`;const needed=amountMeasure.measureText(raw).width;input.style.fontSize=Math.max(14,Math.min(base,Math.floor((width-10)/Math.max(1,needed)*base)))+'px';input.scrollLeft=0;}
 new ResizeObserver(fitAmount).observe($('convert-amount'));
 let converted={},amount=1;function renderConverter(){const raw=$('convert-amount').value.trim().replace(/,/g,''),valid=/^(?:\d+\.?\d*|\.\d+)$/.test(raw)&&Number(raw)<=1e18;amount=valid?Number(raw):null;const data=rates.data,from=$('convert-currency').value;text('convert-error',valid?'':raw?'0以上の数値を入力してください。':'金額を入力してください。');fitAmount();
- for(const key of ['BTC','JPY','USD','STX','GMT','SOL','ETH']){converted[key]=amount===null?null:convert(amount,from,key,data);rolling[key].set(formatRolling(converted[key]),converted[key]);const source=key==='BTC'?(from==='SAT'||from==='BTC'?'固定比率':rates.source(from)):rates.source(key);text('source-'+key,source);$('source-'+key).classList.toggle('is-live',source==='LIVE');const button=document.querySelector(`[data-copy-rate="${key}"]`);button.disabled=converted[key]===null;button.title=converted[key]===null?'レートを取得できていません':`${formatValue(converted[key])} ${key} をコピー`;}
+ for(const key of ['BTC','JPY','USD','STX','GMT','SOL','ETH']){converted[key]=amount===null?null:convert(amount,from,key,data);rolling[key].set(formatRolling(converted[key],key),converted[key]);const source=key==='BTC'?(from==='SAT'||from==='BTC'?'固定比率':rates.source(from)):rates.source(key);text('source-'+key,source);$('source-'+key).classList.toggle('is-live',source==='LIVE');const button=document.querySelector(`[data-copy-rate="${key}"]`);button.disabled=converted[key]===null;button.title=converted[key]===null?'レートを取得できていません':`${formatValue(converted[key],key)} ${key} をコピー`;}
  const rec=rates.record,unavailable=Object.keys(data).length<8;
  const status=rates.live?`実約定 ${new Date(rates.ticks['BTC-USD'].at).toLocaleTimeString('ja-JP')} 更新`:!rec?.data?'取得できませんでした · 更新で再試行':rates.stale?`保存レート · ${time(rec.updatedAt)} 取得`:`${time(rec.updatedAt)} 取得 · 60秒更新${unavailable?' · 一部未取得':''}`;
  text('rate-status',rec||rates.live?status:'レートを取得中…');$('rate-status').classList.toggle('stale',rates.stale&&!rates.live);text('converter-live',rates.live?'LIVE / TICK BY TICK':rates.stale?'CONNECTING':'60s / REFERENCE');$('converter-live').classList.toggle('is-live',rates.live);
@@ -34,7 +34,7 @@ let converted={},amount=1;function renderConverter(){const raw=$('convert-amount
 }
 rates.addEventListener('update',renderConverter);$('convert-amount').addEventListener('input',renderConverter);$('convert-currency').addEventListener('change',renderConverter);document.querySelectorAll('[data-amount]').forEach(button=>button.addEventListener('click',()=>{$('convert-amount').value=button.dataset.amount;$('convert-currency').value='SAT';renderConverter();}));
 $('refresh-rates').addEventListener('click',async()=>{$('refresh-rates').disabled=true;text('refresh-rates','取得中…');try{await rates.refresh();}finally{$('refresh-rates').disabled=false;text('refresh-rates','↻ 更新');}});
-document.querySelectorAll('[data-copy-rate]').forEach(button=>button.addEventListener('click',async()=>{const key=button.dataset.copyRate,value=converted[key];if(value===null)return;try{await navigator.clipboard.writeText(formatValue(value).replace(/,/g,''));toast(`${key} の換算額をコピーしました`);}catch{toast('コピーできませんでした。表示された数値を選択してください。');}}));
+document.querySelectorAll('[data-copy-rate]').forEach(button=>button.addEventListener('click',async()=>{const key=button.dataset.copyRate,value=converted[key];if(value===null)return;try{await navigator.clipboard.writeText(formatValue(value,key).replace(/,/g,''));toast(`${key} の換算額をコピーしました`);}catch{toast('コピーできませんでした。表示された数値を選択してください。');}}));
 
 let currentHash='',lastBlockId='';
 function showHash(hash,label){currentHash=hash;text('hash-value',hash);text('hash-origin',label);drawHash(hash);}
