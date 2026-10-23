@@ -72,3 +72,10 @@ body.zen-mode .hero-content{visibility:visible;position:static;margin:0}body.zen
 .rate-btc small{color:#f6d5ad;font-size:13px}
 .rate-btc strong,.rate-btc strong.long-number{--rate-font:44;font-size:44px;color:#ffe0b9}
 @media(max-width:640px){.converter>.rate-btc{padding:14px 12px;min-height:108px}.rate-btc strong,.rate-btc strong.long-number{--rate-font:36;font-size:36px}}
+
+/* Arcade-only effects; the shared controls remain usable at phone widths. */
+.arcade-note .sfx-controls{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}
+.sfx-toggle{min-height:40px;padding:9px 13px;border:1px solid #f6af7245;border-radius:8px;font:12px var(--mono);color:var(--orange);background:#f6af720a;white-space:nowrap}
+.sfx-toggle[aria-pressed="false"]{color:var(--muted);border-color:var(--line);background:transparent}
+.sfx-controls label{font:11px var(--mono);white-space:nowrap}.sfx-controls input{width:82px;min-height:28px}.sfx-controls output{min-width:4ch;text-align:right}
+@media(max-width:760px){.arcade-note{display:grid;gap:12px}.arcade-note .sfx-controls{justify-content:flex-start;gap:12px}.arcade-note>span{max-width:none;text-align:left;font-size:9px}.arcade-note .sfx-controls label{font-size:11px}}

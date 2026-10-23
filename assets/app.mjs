@@ -5,7 +5,7 @@ import {sha256} from './hash.mjs?v=6.0.0';
 import {Cosmos} from './cosmos.mjs?v=6.0.0';
 import {DataFeed,isStale} from './data.mjs?v=6.0.0';
 import {RateFeed,convert,formatValue,formatRolling} from './converter.mjs?v=6.0.3';
-import {Arcade} from './arcade.mjs?v=6.0.0';
+import {Arcade} from './arcade.mjs?v=6.1.0';
 const $=id=>document.getElementById(id),text=(id,value)=>$(id).textContent=value;
 let toastTimer;function toast(message){text('toast',message);$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000);}
 const integer=n=>Number.isFinite(n)?new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(n):'—';

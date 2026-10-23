@@ -2,7 +2,7 @@
 
 [Open DIMENSION](https://pythonddd.github.io/dimension/) · [日本語](README.ja.md)
 
-Bitcoin, a drifting black hole and four silent games on one continuous page. No navigation tabs or game dialogs.
+Bitcoin, a drifting black hole and four games with optional sound effects on one continuous page. No navigation tabs or game dialogs.
 
 ![DIMENSION v6 preview](docs/dimension-v6-20261022.jpg)
 
@@ -24,7 +24,7 @@ Bitcoin, a drifting black hole and four silent games on one continuous page. No 
 | Block Breaker | Paddle-and-ball arcade with three lives, successive levels, two-hit bricks, combos and a temporary wider paddle. Drag or use left/right keys; Space launches/pauses. |
 | Chain Match | Swap adjacent crypto symbols to match three or more. Twenty successful moves, scored cascades, hints and automatic reshuffling when needed. |
 
-Scores are fictional game points. Best scores are stored locally; Hash Echo's existing best score is retained. Timed games pause on focus loss, when hidden, or when scrolled out of view. Resume is explicit. The site has no music, audio playback or game sound effects.
+Scores are fictional game points. Best scores are stored locally; Hash Echo's existing best score is retained. Timed games pause on focus loss, when hidden, or when scrolled out of view. Resume is explicit. The games have short, original Web Audio effects: four distinct Hash Echo notes, Tetris movement/rotation/landing/line clears, Breaker paddle/brick/life feedback and Match cascades. Sound starts only after interacting with the arcade. The shared mute and volume controls are saved locally; the default volume is 35%. Effects stop on focus loss or when the page is hidden. There is no background music or external audio download.
 
 Sats Merge, Block pulse, the transaction ticker, NCS, Crypto Lab, 2017 archive/replay, scene tabs and modal navigation have been removed.
 
@@ -56,7 +56,7 @@ GitHub Pages serves **main / (root)**. `dist/` is an optional static build. The 
 
 ## Verification
 
-38 automated tests cover conversions, live cross-rates, stale/out-of-order quotes, candle validation and aggregation, projected-block validation and WebSocket ingestion, SHA-256, the four game engines. Static checks verify element/module/asset references and the absence of the removed panels.
+Automated tests cover conversions, live cross-rates, stale/out-of-order quotes, candle validation and aggregation, projected-block validation and WebSocket ingestion, SHA-256, the four game engines. Static checks verify element/module/asset references and the absence of the removed panels.
 
 Chrome checks exercised actual WebSocket prices, 1,000,000 GMT conversion, an uncut 19-digit amount at a 375 CSS-pixel content width, chart interval changes and expansion, live projected-block updates, inline block selection. Desktop and phone-width documents have no horizontal overflow; the mempool rail intentionally scrolls within its own region.
 

@@ -10,5 +10,5 @@ await access('assets/event-horizon.png');assert(!/Sats Merge|merge-board/.test(h
 assert(!/NCS|soundcloud|ncs-player|Block pulse|tx-stream/.test(html),'Removed music or block panel returned');
 await access('assets/vendor/lightweight-charts.mjs');
 
-assert(!/<audio\b|audio-toggle|game-sound|music-status|Quiet Orbit|Ambient|MUSIC|音楽/.test(html),'Audio UI returned');
-for(const file of (await readdir('assets')).filter(f=>f.endsWith('.mjs'))){const code=await readFile(`assets/${file}`,'utf8');assert(!/AudioContext|new Audio\(|MusicRadio|ambient-player/.test(code),`Audio runtime returned: ${file}`);}
+assert(!/<audio\b|audio-toggle|music-status|Quiet Orbit|Ambient|MUSIC|音楽/.test(html),'Background music UI returned');
+for(const file of (await readdir('assets')).filter(f=>f.endsWith('.mjs'))){const code=await readFile(`assets/${file}`,'utf8');assert(!/new Audio\(|MusicRadio|ambient-player/.test(code),`Music runtime returned: ${file}`);if(file!=='game-sounds.mjs')assert(!/AudioContext/.test(code),`Audio must stay in the arcade effect module: ${file}`);}
